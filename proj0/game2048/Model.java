@@ -113,6 +113,43 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        this.board.setViewingPerspective(side);
+        int size = this.board.size();
+        for (int col = size - 1; col >= 0; col--) {
+            for (int row = size - 1; row >= 0; row--) {
+                // If the current tile is null, move the first non-null tile below to here
+                if (this.board.tile(col, row) == null) {
+                    for (int row_down = row - 1; row_down >= 0; row_down--) {
+                        Tile tile_1 = this.board.tile(col, row_down);
+                        // Find the first non-null tile, move it here and end loop
+                        if (tile_1 != null) {
+                            this.board.move(col, row, tile_1);
+                            changed = true;
+                            break;
+                        }
+                    }
+                }
+
+                Tile current_tile = this.board.tile(col, row);
+                // If the current tile is empty, means there is no tile below to move, this column done
+                if (current_tile == null) {
+                    break;
+                }
+
+               for (int row_down = row - 1; row_down >= 0; row_down--) {
+                   Tile tile_2 = this.board.tile(col, row_down);
+                   // Find the first tile below with the same value, merge and end loop
+                   if (tile_2 != null && tile_2.value() == current_tile.value()) {
+                       this.board.move(col, row,tile_2);
+                       changed = true;
+                       this.score += this.board.tile(col, row).value();
+                       break;
+                   }
+               }
+            }
+        }
+
+        this.board.setViewingPerspective(Side.NORTH);
 
         checkGameOver();
         if (changed) {
@@ -180,7 +217,7 @@ public class Model extends Observable {
         for (int col = 0; col < size; col++) {
             for (int row = 0; row < size; row++) {
                 int tile_value = b.tile(col, row).value();
-                // Compare with tile on left, up, right, down
+                // Compare with tile on left, down, right, up
                 if ((col > 0 && b.tile(col - 1, row).value() == tile_value) ||
                         (row > 0 && b.tile(col, row - 1).value() == tile_value) ||
                         (col < size - 1 && b.tile(col + 1, row).value() == tile_value) ||
