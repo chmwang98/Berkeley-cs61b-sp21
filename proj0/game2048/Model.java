@@ -119,14 +119,11 @@ public class Model extends Observable {
             for (int row = size - 1; row >= 0; row--) {
                 // If the current tile is null, move the first non-null tile below to here
                 if (this.board.tile(col, row) == null) {
-                    for (int row_down = row - 1; row_down >= 0; row_down--) {
-                        Tile tile_1 = this.board.tile(col, row_down);
-                        // Find the first non-null tile, move it here and end loop
-                        if (tile_1 != null) {
-                            this.board.move(col, row, tile_1);
-                            changed = true;
-                            break;
-                        }
+                    // Find the first non-null tile, move it here and end loop
+                    Tile tile_1 = findNotNullTile(col, row);
+                    if (tile_1 != null) {
+                        this.board.move(col, row, tile_1);
+                        changed = true;
                     }
                 }
 
@@ -136,16 +133,14 @@ public class Model extends Observable {
                     break;
                 }
 
-               for (int row_down = row - 1; row_down >= 0; row_down--) {
-                   Tile tile_2 = this.board.tile(col, row_down);
-                   // Find the first tile below with the same value, merge and end loop
-                   if (tile_2 != null && tile_2.value() == current_tile.value()) {
-                       this.board.move(col, row,tile_2);
-                       changed = true;
-                       this.score += this.board.tile(col, row).value();
-                       break;
-                   }
-               }
+                // Find the first tile below which is not null
+                // if values are the same: merge
+                Tile tile_2 = findNotNullTile(col, row);
+                if (tile_2 != null && tile_2.value() == current_tile.value()) {
+                    this.board.move(col, row, tile_2);
+                    changed = true;
+                    this.score += this.board.tile(col, row).value();
+                }
             }
         }
 
@@ -157,6 +152,17 @@ public class Model extends Observable {
         }
         return changed;
     }
+
+    private Tile findNotNullTile(int col, int row) {
+        for (int row_down = row - 1; row_down >= 0; row_down--) {
+            Tile tile = this.board.tile(col, row_down);
+            if (tile != null) {
+                return tile;
+            }
+        }
+        return null;
+    }
+
 
     /** Checks if the game is over and sets the gameOver variable
      *  appropriately.
