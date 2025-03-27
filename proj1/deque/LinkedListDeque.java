@@ -1,14 +1,12 @@
 package deque;
 
-import jh61b.junit.In;
-
 import java.util.Iterator;
 
 public class LinkedListDeque<T> implements Deque<T> {
     private class IntNode {
-        public T item;
-        public IntNode prev;
-        public IntNode next;
+        private T item;
+        private IntNode prev;
+        private IntNode next;
 
         private IntNode(T i, IntNode p, IntNode n) {
             item = i;
@@ -124,7 +122,7 @@ public class LinkedListDeque<T> implements Deque<T> {
     private class LinkedListDequeIterator implements Iterator<T> {
         private int wizPos;
 
-        public LinkedListDequeIterator() {
+        LinkedListDequeIterator() {
             wizPos = 0;
         }
 
@@ -140,6 +138,10 @@ public class LinkedListDeque<T> implements Deque<T> {
     }
 
     public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+
         if (o == this) {
             return true;
         }
