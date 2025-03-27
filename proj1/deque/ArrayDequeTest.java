@@ -62,7 +62,7 @@ public class ArrayDequeTest {
         lld1.removeFirst();
 
         int size = lld1.size();
-        String errorMsg = "  Bad size returned when removing from empty deque.\n";
+        String errorMsg = "  Bad size returned when removing fom empty deque.\n";
         errorMsg += "  student size() returned " + size + "\n";
         errorMsg += "  actual size() returned 0\n";
 
