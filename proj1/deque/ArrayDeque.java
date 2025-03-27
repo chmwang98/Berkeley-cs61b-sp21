@@ -143,7 +143,10 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
                     return false;
                 }
             }
+        } else {
+            return false;
         }
+
         return true;
     }
 }
