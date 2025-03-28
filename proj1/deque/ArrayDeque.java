@@ -14,13 +14,14 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             resize((int) (size * 1.2));
         }
         items[nextFirst] = item;
-        nextFirst = indexMinusOne(nextFirst);
+//        nextFirst = indexMinusOne(nextFirst);
+        nextFirst = (nextFirst - 1 + items.length) % items.length;
         size += 1;
     }
 
-    private int indexMinusOne(int index) {
-        return (index - 1 + items.length) % items.length;
-    }
+//    private int indexMinusOne(int index) {
+//        return (index - 1 + items.length) % items.length;
+//    }
 
     @Override
     public void addLast(T item) {
@@ -28,13 +29,13 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             resize((int) (size * 1.2));
         }
         items[nextLast] = item;
-        nextLast = indexAddOne(nextLast);
+        nextLast = (nextLast + 1) % items.length;
         size += 1;
     }
 
-    private int indexAddOne(int index) {
-        return (index + 1) % items.length;
-    }
+//    private int indexAddOne(int index) {
+//        return (index + 1) % items.length;
+//    }
 
     private void resize(int capacity) {
         T[] newItems = (T[]) new Object[capacity];
@@ -42,8 +43,8 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             newItems[i] = get(i);
         }
         items = newItems;
-        nextFirst = indexMinusOne(0);
-        nextLast = indexAddOne(size - 1);
+        nextFirst = items.length - 1;
+        nextLast = size;
     }
 
     @Override
@@ -53,10 +54,10 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public void printDeque() {
-        int index = indexAddOne(nextFirst);
+        int index = (nextFirst + 1) % items.length;
         while (index != nextLast) {
             System.out.print(items[index] + " ");
-            index = indexAddOne(index);
+            index = (index + 1) % items.length;
         }
         System.out.println();
     }
@@ -68,7 +69,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         } else if (items.length >= 16 && (size / items.length <= 0.25)) {
             resize(size);
         }
-        nextFirst = indexAddOne(nextFirst);
+        nextFirst = (nextFirst + 1) % items.length;
         size -= 1;
         return items[nextFirst];
     }
@@ -80,7 +81,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         } else if (items.length >= 16 && (size / items.length <= 0.25)) {
             resize(size);
         }
-        nextLast = indexMinusOne(nextLast);
+        nextLast = (nextLast - 1 + items.length) % items.length;
         size -= 1;
         return items[nextLast];
     }
