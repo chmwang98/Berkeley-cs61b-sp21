@@ -11,36 +11,29 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     @Override
     public void addFirst(T item) {
         if (size == items.length) {
-            resize((int) (size * 1.2));
+            resize(size * 2);
         }
         items[nextFirst] = item;
-//        nextFirst = indexMinusOne(nextFirst);
         nextFirst = (nextFirst - 1 + items.length) % items.length;
-        size += 1;
+        size++;
     }
-
-//    private int indexMinusOne(int index) {
-//        return (index - 1 + items.length) % items.length;
-//    }
 
     @Override
     public void addLast(T item) {
         if (size == items.length) {
-            resize((int) (size * 1.2));
+            resize(size * 2);
         }
         items[nextLast] = item;
         nextLast = (nextLast + 1) % items.length;
-        size += 1;
+        size++;
     }
-
-//    private int indexAddOne(int index) {
-//        return (index + 1) % items.length;
-//    }
 
     private void resize(int capacity) {
         T[] newItems = (T[]) new Object[capacity];
+        int oldIndex = 0;
         for (int i = 0; i < size; i++) {
-            newItems[i] = get(i);
+            oldIndex = (nextFirst + 1 + i) % items.length;
+            newItems[i] = items[oldIndex];
         }
         items = newItems;
         nextFirst = items.length - 1;
@@ -66,8 +59,8 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     public T removeFirst() {
         if (isEmpty()) {
             return null;
-        } else if (items.length >= 16 && (size / items.length <= 0.25)) {
-            resize(size);
+        } else if (items.length >= 16 && size * 4 <= items.length) {
+            resize(items.length / 2);
         }
         nextFirst = (nextFirst + 1) % items.length;
         size -= 1;
@@ -78,8 +71,8 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     public T removeLast() {
         if (isEmpty()) {
             return null;
-        } else if (items.length >= 16 && (size / items.length <= 0.25)) {
-            resize(size);
+        } else if (items.length >= 16 && size * 4 <= items.length) {
+            resize(items.length / 2);
         }
         nextLast = (nextLast - 1 + items.length) % items.length;
         size -= 1;
