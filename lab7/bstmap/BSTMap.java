@@ -1,8 +1,6 @@
 package bstmap;
 
-import afu.org.checkerframework.checker.oigj.qual.O;
 import edu.princeton.cs.algs4.BST;
-import edu.princeton.cs.algs4.SET;
 
 import java.util.Comparator;
 import java.util.HashSet;
