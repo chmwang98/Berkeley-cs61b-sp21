@@ -1,8 +1,11 @@
 package bstmap;
 
+import afu.org.checkerframework.checker.oigj.qual.O;
 import edu.princeton.cs.algs4.BST;
+import edu.princeton.cs.algs4.SET;
 
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -106,7 +109,21 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V>{
      * If you don't implement this, throw an UnsupportedOperationException. */
     @Override
     public Set<K> keySet() {
-        throw new UnsupportedOperationException();
+        if (size() == 0) {
+            return null;
+        }
+        Set<K> keySet = new HashSet<>();
+        collectKeys(root, keySet);
+        return keySet;
+    }
+
+    private void collectKeys(BSTNode node, Set<K> keySet) {
+        if (node == null) {
+            return;
+        }
+        collectKeys(node.left, keySet);
+        keySet.add(node.key);
+        collectKeys(node.right, keySet);
     }
 
     /* Removes the mapping for the specified key from this map if present.
@@ -114,7 +131,51 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V>{
      * UnsupportedOperationException. */
     @Override
     public V remove(K key) {
-        throw new UnsupportedOperationException();
+        V removeValue = get(key);
+        root = remove(root, key);
+        return removeValue;
+    }
+
+    private BSTNode remove(BSTNode node, K key) {
+        if (node == null) {
+            return null;
+        }
+
+        int cmp = key.compareTo(node.key);
+        if (cmp < 0) {
+            node.left = remove(node.left, key);
+        } else if (cmp > 0) {
+            node.right = remove(node.right, key);
+        } else {
+            if (node.left == null) {
+                return node.right;
+            } else if (node.right == null) {
+                return node.left;
+            } else {
+                BSTNode t = node;
+                node = findMax(node.left);
+                node.left = removeMax(t.left);
+                node.right = t.right;
+            }
+        }
+        node.size = 1 + size(node.left) + size(node.right);
+        return node;
+    }
+
+    private BSTNode findMax (BSTNode node) {
+        if (node.right == null) {
+            return node;
+        }
+        return findMax(node.right);
+    }
+
+    private BSTNode removeMax (BSTNode node) {
+        if (node.right == null) {
+            return node.left;
+        }
+        node.right = removeMax(node.right);
+        node.size = size(node.left) + size(node.right) + 1;
+        return node;
     }
 
     /* Removes the entry for the specified key only if it is currently mapped to
@@ -126,10 +187,13 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V>{
     }
 
     public Iterator<K> iterator() {
-        throw new UnsupportedOperationException();
+        return keySet().iterator();
     }
 
     public void printInOrder() {
-
+        for (K key: keySet()) {
+            System.out.print(key + " ");
+        }
+        System.out.println();
     }
 }
