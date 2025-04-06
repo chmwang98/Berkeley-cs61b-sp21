@@ -9,7 +9,7 @@ import static gitlet.Utils.*;
  *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- *  @author TODO
+ *  @author ming
  */
 public class Repository {
     /**
@@ -25,5 +25,16 @@ public class Repository {
     /** The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
 
-    /* TODO: fill in the rest of this class. */
+    /**
+     * Initialize the directory
+     * If the directory is already initialized, show the error message and exit
+     */
+    public static void initCommand() {
+        if (GITLET_DIR.exists()) {
+            String msg = "A Gitlet version-control system already exists in the current directory.";
+            Utils.message(msg);
+            System.exit(0);
+        }
+        GITLET_DIR.mkdir();
+    }
 }
