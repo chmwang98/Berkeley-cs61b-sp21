@@ -24,11 +24,18 @@ public class Repository {
     public static final File CWD = new File(System.getProperty("user.dir"));
     /** The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
+    public static final File OBJECT_DIR = join(GITLET_DIR, "objects");
 
     /**
-     * Initialize the directory
-     * If the directory is already initialized, show the error message and exit
-     */
+     * Creates a new Gitlet version-control system in the current directory.
+     * This system will automatically start with one commit that contains no files and has the commit message.
+     * It will have a single branch: master, which initially points to this initial commit.
+     * TODO: Master will be the current branch.
+     * The timestamp for this initial commit will be 00:00:00 UTC, Thursday, 1 January 1970.
+     * Since the initial commit in all repositories created by Gitlet will have exactly the same content,
+     * it follows that all repositories will automatically share this commit (they will all have the same UID)
+     * and all commits in all repositories will trace back to it.
+     * */
     public static void initCommand() {
         if (GITLET_DIR.exists()) {
             String msg = "A Gitlet version-control system already exists in the current directory.";
@@ -36,5 +43,8 @@ public class Repository {
             System.exit(0);
         }
         GITLET_DIR.mkdir();
+        OBJECT_DIR.mkdir();
+        Commit initialCommit = new Commit();
+        initialCommit.save();
     }
 }

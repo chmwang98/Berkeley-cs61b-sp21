@@ -23,8 +23,8 @@ public class Main {
                 Repository.initCommand();
                 break;
             case "add":
-                // TODO: handle the `add [filename]` command
                 validateNumArgs("init", args, 2);
+
                 break;
             case "commit":
                 break;
