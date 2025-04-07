@@ -79,6 +79,7 @@ public class Repository {
      * */
     public static void addCommand(String fileName) {
         File file = join(CWD, fileName);
+        String filePath = file.getPath();
         if (!file.exists()) {
             printErrorAndExit("File does not exist.");
         }
@@ -86,9 +87,21 @@ public class Repository {
         Blob blob = new Blob(file);
         currentCommit = readCurrentCommit();
         addStage = readStage(ADDSTAGE_FILE);
+        removeStage = readStage(REMOVESTAGE_FILE);
         // if the blob in neither in the current commit, nor in the current stage, add it to currentStage
         if (!currentCommit.isBlobInCommit(blob) && !addStage.isBlobInStage(blob)) {
             addStage.addBlobToStage(blob);
+            addStage.saveStage();
+        } else if (currentCommit.isBlobInCommit(blob) && !addStage.isBlobInStage(blob)) {
+            // if the file is the same as current commit, but added into the add stage, remove it from stage
+            addStage.removeFilePathFromStage(filePath);
+            addStage.saveStage();
+        }
+
+        // remove file from the remove stage
+        if (removeStage.isFilePathInStage(filePath)) {
+            removeStage.removeFilePathFromStage(filePath);
+            removeStage.saveStage();
         }
     }
 
@@ -100,12 +113,21 @@ public class Repository {
     public static void rmCommand(String fileName) {
         File file = join(CWD, fileName);
         // create a blob for the file
-        Blob blob = new Blob(file);
+        String filePath = file.getPath();
         currentCommit = readCurrentCommit();
         addStage = readStage(ADDSTAGE_FILE);
         removeStage = readStage(REMOVESTAGE_FILE);
-        // if the blob in neither in the current commit, nor in the current stage, print error
-        if (!currentCommit.isBlobInCommit(blob) && !addStage.isBlobInStage(blob)) {
+
+        // if the file is in the add stage, remove it
+        if (addStage.isFilePathInStage(filePath)) {
+            addStage.removeFilePathFromStage(filePath);
+            addStage.saveStage();
+        } else if (currentCommit.isFilePathInCommit(filePath)) {
+            // if file is tracked in the current commit, add file to remove stage
+            String blobID = currentCommit.getBlobIDByFilePath(filePath);
+            removeStage.addFilePathAndBlobIDToStage(filePath, blobID);
+            removeStage.saveStage();
+        } else {
             printErrorAndExit("No reason to remove the file.");
         }
     }

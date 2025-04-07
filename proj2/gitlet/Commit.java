@@ -30,7 +30,7 @@ public class Commit implements Serializable {
     private String message;
     private Date currentTime;
     private String timeStamp;
-    private Map<String, String> mapFileNameToBlobID;
+    private Map<String, String> mapFilePathToBlobID;
     private List<String> parents;
     private String id;
     private File commitFile;
@@ -39,7 +39,7 @@ public class Commit implements Serializable {
         message = "initial commit";
         currentTime = new Date(0);
         timeStamp = generateTimeStamp();
-        mapFileNameToBlobID = new HashMap<>();
+        mapFilePathToBlobID = new HashMap<>();
         parents = new ArrayList<>();
         id = generateID();
         commitFile = generateCommitFile();
@@ -52,7 +52,7 @@ public class Commit implements Serializable {
     }
 
     private String generateID() {
-        return Utils.sha1(message, timeStamp, mapFileNameToBlobID.toString(), parents.toString());
+        return Utils.sha1(message, timeStamp, mapFilePathToBlobID.toString(), parents.toString());
     }
 
     private File generateCommitFile() {
@@ -63,8 +63,16 @@ public class Commit implements Serializable {
         writeObject(commitFile, this);
     }
 
+    public boolean isFilePathInCommit(String filePath) {
+        return mapFilePathToBlobID.containsKey(filePath);
+    }
+
     public boolean isBlobInCommit(Blob blob) {
-        return mapFileNameToBlobID.containsValue(blob.getID());
+        return mapFilePathToBlobID.containsValue(blob.getID());
+    }
+
+    public String getBlobIDByFilePath(String filePath) {
+        return mapFilePathToBlobID.get(filePath);
     }
 
     public String getID() {

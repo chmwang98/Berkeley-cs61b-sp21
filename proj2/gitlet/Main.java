@@ -32,7 +32,8 @@ public class Main {
                 break;
             case "rm":
                 validateNumArgs(args, 2);
-
+                Repository.checkInitialized();
+                Repository.rmCommand(args[1]);
                 break;
             case "checkout":
                 break;
