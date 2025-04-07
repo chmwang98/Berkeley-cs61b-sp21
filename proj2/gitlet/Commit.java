@@ -39,8 +39,18 @@ public class Commit implements Serializable {
         message = "initial commit";
         currentTime = new Date(0);
         timeStamp = generateTimeStamp();
-        mapFilePathToBlobID = new HashMap<>();
+        mapFilePathToBlobID = new TreeMap<>();
         parents = new ArrayList<>();
+        id = generateID();
+        commitFile = generateCommitFile();
+    }
+
+    public Commit(String message, Map<String, String> mapFilePathToBlobID, List<String> parents) {
+        this.message = message;
+        currentTime = new Date();
+        timeStamp = generateTimeStamp();
+        this.mapFilePathToBlobID = mapFilePathToBlobID;
+        this.parents = parents;
         id = generateID();
         commitFile = generateCommitFile();
     }
@@ -77,5 +87,9 @@ public class Commit implements Serializable {
 
     public String getID() {
         return id;
+    }
+
+    public Map<String, String> getMapFilePathToBlobID() {
+        return mapFilePathToBlobID;
     }
 }

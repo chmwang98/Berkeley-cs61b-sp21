@@ -43,4 +43,12 @@ public class Stage implements Serializable {
     public boolean isBlobInStage(Blob blob) {
         return mapFilePathToBlobID.containsValue(blob.getID());
     }
+
+    public Map<String, String> getMapFilePathToBlobID() {
+        return mapFilePathToBlobID;
+    }
+
+    public void clear() {
+        mapFilePathToBlobID.clear();
+    }
 }

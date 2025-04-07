@@ -28,7 +28,7 @@ public class Main {
             case "commit":
                 validateNumArgs(args, 2);
                 Repository.checkInitialized();
-
+                Repository.commitCommand(args[1]);
                 break;
             case "rm":
                 validateNumArgs(args, 2);

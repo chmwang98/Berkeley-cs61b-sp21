@@ -1,6 +1,11 @@
 package gitlet;
 
 import java.io.File;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import static gitlet.Utils.*;
 
 // TODO: any imports you need here
@@ -105,9 +110,55 @@ public class Repository {
         }
     }
 
-
     public static void commitCommand(String message) {
+        if (message == "") {
+            printErrorAndExit("Please enter a commit message.");
+        }
 
+        // if no files in add and remove stage, abort it
+        addStage = readStage(ADDSTAGE_FILE);
+        removeStage = readStage(REMOVESTAGE_FILE);
+        Map<String, String> addMap = addStage.getMapFilePathToBlobID();
+        Map<String, String> removeMap = removeStage.getMapFilePathToBlobID();
+        if (addMap.isEmpty() && removeMap.isEmpty()) {
+            printErrorAndExit("No changes added to the commit.");
+        }
+
+        // get current commit and map
+        currentCommit = readCurrentCommit();
+        Map<String, String> commitMap = currentCommit.getMapFilePathToBlobID();
+
+        // calculate new mappings
+        if (!addMap.isEmpty()) {
+            for (String filePath : addMap.keySet()) {
+                commitMap.put(filePath, addMap.get(filePath));
+            }
+        }
+        if (!removeMap.isEmpty()) {
+            for (String filePath : removeMap.keySet()) {
+                commitMap.remove(filePath);
+            }
+        }
+
+        // create new commit
+        List<String> parents = new ArrayList<>();
+        parents.add(currentCommit.getID());
+        Commit newCommit = new Commit(message, commitMap, parents);
+
+        // clean add/remove stage files
+        addStage.clear();
+        addStage.saveStage();
+        removeStage.clear();
+        removeStage.saveStage();
+
+        // set the commit as "current commit" and save
+        currentCommit = newCommit;
+        currentCommit.save();
+
+        // change the HEAD pointer
+        String currentBranch = readCurrentBranch();
+        File HEADS_FILE = join(HEADS_DIR, currentBranch);
+        writeContents(HEADS_FILE, currentCommit.getID());
     }
 
     public static void rmCommand(String fileName) {
