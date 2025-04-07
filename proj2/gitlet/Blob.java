@@ -2,9 +2,12 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Map;
+import java.util.TreeMap;
 
 import static gitlet.Utils.*;
 import static gitlet.Repository.OBJECT_DIR;
+import static gitlet.Repository.STAGE_FILE;
 
 public class Blob implements Serializable {
     // name, path and content of the file to be converted to blob
@@ -27,11 +30,15 @@ public class Blob implements Serializable {
         return file.getName();
     }
 
+    public String getFilePath() {
+        return filePath;
+    }
+
     public String getContent() {
         return content;
     }
 
-    public String getBlobID() {
+    public String getID() {
         return id;
     }
 
@@ -43,7 +50,10 @@ public class Blob implements Serializable {
         return join(OBJECT_DIR, id);
     }
 
-    public void save() {
+    public void storeBlob() {
+        if (blobFile.exists()) {
+            return;
+        }
         writeObject(blobFile, this);
     }
 }

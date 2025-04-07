@@ -12,8 +12,7 @@ public class Main {
      */
     public static void main(String[] args) {
         if (args.length == 0) {
-            String msg = "Please enter a command.";
-            Utils.message(msg);
+            System.out.println("Please enter a command.");
             System.exit(0);
         }
         String firstArg = args[0];
@@ -24,7 +23,8 @@ public class Main {
                 break;
             case "add":
                 validateNumArgs("init", args, 2);
-
+                Repository.checkInitialized();
+                Repository.addCommand(args[1]);
                 break;
             case "commit":
                 break;
@@ -33,16 +33,14 @@ public class Main {
             case "log":
                 break;
             default:
-                String msg = "No command with that name exists.";
-                Utils.message(msg);
+                System.out.println("No command with that name exists.");
                 System.exit(0);
         }
     }
 
     public static void validateNumArgs(String cmd, String[] args, int n) {
         if (args.length != n) {
-            String msg = "Incorrect operands.";
-            Utils.message(msg);
+            System.out.println("Incorrect operands.");
             System.exit(0);
         }
     }

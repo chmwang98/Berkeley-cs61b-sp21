@@ -62,4 +62,12 @@ public class Commit implements Serializable {
     public void save() {
         writeObject(commitFile, this);
     }
+
+    public boolean isBlobInCommit(Blob blob) {
+        return mapFileNameToBlobID.containsValue(blob.getID());
+    }
+
+    public String getID() {
+        return id;
+    }
 }
