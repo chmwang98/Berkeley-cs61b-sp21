@@ -31,10 +31,12 @@ public class Repository {
     public static final File HEADS_DIR = join(REFS_DIR, "heads");
     public static final File HEAD_FILE = join(GITLET_DIR, "HEAD");
 
-    public static final File STAGE_FILE = join(GITLET_DIR, "stage");
+    public static final File ADDSTAGE_FILE = join(GITLET_DIR, "add_stage");
+    public static final File REMOVESTAGE_FILE = join(GITLET_DIR, "remove_stage");
 
     public static Commit currentCommit;
-    public static Stage currentStage = new Stage();
+    public static Stage addStage = new Stage(ADDSTAGE_FILE);
+    public static Stage removeStage = new Stage(REMOVESTAGE_FILE);
     public static String currentBranch;
 
     /**
@@ -49,8 +51,7 @@ public class Repository {
      * */
     public static void initCommand() {
         if (GITLET_DIR.exists()) {
-            System.out.println("A Gitlet version-control system already exists in the current directory.");
-            System.exit(0);
+            printErrorAndExit("A Gitlet version-control system already exists in the current directory.");
         }
         GITLET_DIR.mkdir();
         OBJECT_DIR.mkdir();
@@ -79,16 +80,33 @@ public class Repository {
     public static void addCommand(String fileName) {
         File file = join(CWD, fileName);
         if (!file.exists()) {
-            System.out.println("File does not exist.");
-            System.exit(0);
+            printErrorAndExit("File does not exist.");
         }
         // create a blob for the file
         Blob blob = new Blob(file);
         currentCommit = readCurrentCommit();
-        currentStage = readStage();
+        addStage = readStage(ADDSTAGE_FILE);
         // if the blob in neither in the current commit, nor in the current stage, add it to currentStage
-        if (!currentCommit.isBlobInCommit(blob) && !currentStage.isBlobInStage(blob)) {
-            currentStage.addBlobToStage(blob);
+        if (!currentCommit.isBlobInCommit(blob) && !addStage.isBlobInStage(blob)) {
+            addStage.addBlobToStage(blob);
+        }
+    }
+
+
+    public static void commitCommand(String message) {
+
+    }
+
+    public static void rmCommand(String fileName) {
+        File file = join(CWD, fileName);
+        // create a blob for the file
+        Blob blob = new Blob(file);
+        currentCommit = readCurrentCommit();
+        addStage = readStage(ADDSTAGE_FILE);
+        removeStage = readStage(REMOVESTAGE_FILE);
+        // if the blob in neither in the current commit, nor in the current stage, print error
+        if (!currentCommit.isBlobInCommit(blob) && !addStage.isBlobInStage(blob)) {
+            printErrorAndExit("No reason to remove the file.");
         }
     }
 
@@ -108,10 +126,10 @@ public class Repository {
         return readContentsAsString(HEAD_FILE);
     }
 
-    // read the content in currentStage file or create a new currentStage if empty
-    private static Stage readStage() {
+    // read the content in stage or create a new if empty
+    private static Stage readStage(File STAGE_FILE) {
         if (!STAGE_FILE.exists()) {
-            return new Stage();
+            return new Stage(STAGE_FILE);
         }
         return readObject(STAGE_FILE, Stage.class);
     }
@@ -119,8 +137,12 @@ public class Repository {
     // Commands other than 'init' have to be executed in initialized directory
     public static void checkInitialized() {
         if (!GITLET_DIR.exists()) {
-            System.out.println("Not in an initialized Gitlet directory.");
-            System.exit(0);
+            printErrorAndExit("Not in an initialized Gitlet directory.");
         }
+    }
+
+    public static void printErrorAndExit(String message) {
+        System.out.println(message);
+        System.exit(0);
     }
 }

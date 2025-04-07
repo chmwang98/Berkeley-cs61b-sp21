@@ -5,14 +5,15 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static gitlet.Repository.STAGE_FILE;
 import static gitlet.Utils.writeObject;
 
 public class Stage implements Serializable {
     private Map<String, String> mapFileNameToBlobID;
+    private File STAGE_FILE;
 
-    public Stage() {
+    public Stage(File file) {
         mapFileNameToBlobID = new TreeMap<>();
+        STAGE_FILE = file;
     }
 
     public void addBlobToStage(Blob blob) {

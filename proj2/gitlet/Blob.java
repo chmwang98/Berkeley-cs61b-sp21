@@ -7,7 +7,6 @@ import java.util.TreeMap;
 
 import static gitlet.Utils.*;
 import static gitlet.Repository.OBJECT_DIR;
-import static gitlet.Repository.STAGE_FILE;
 
 public class Blob implements Serializable {
     // name, path and content of the file to be converted to blob

@@ -1,23 +1,20 @@
 # Gitlet Design Document
 
-**Name**:
+**Name**: ming
 
 ## Classes and Data Structures
 
-### Class 1
-
-#### Fields
-
-1. Field 1
-2. Field 2
+### Commit
 
 
-### Class 2
+### Blob
 
-#### Fields
 
-1. Field 1
-2. Field 2
+
+### Stage
+
+
+### Repository
 
 
 ## Algorithms
