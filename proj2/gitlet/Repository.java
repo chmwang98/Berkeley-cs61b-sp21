@@ -275,6 +275,22 @@ public class Repository {
         writeContents(HEAD_FILE, branch);
     }
 
+    public static void findCommand(String message) {
+        Boolean noSuchCommit = true;
+        // find all commits with the message
+        List<String> commitList = plainFilenamesIn(OBJECT_DIR);
+        for (String id : commitList) {
+            currentCommit = readCommitByID(id);
+            if (message.equals(currentCommit.getMessage())) {
+                System.out.println(currentCommit.getID());
+                noSuchCommit = false;
+            }
+        }
+        if (noSuchCommit) {
+            printErrorAndExit("Found no commit with that message.");
+        }
+    }
+
     private static List<String> findOnlyTrackedByFirst(Commit first, Commit second) {
         List<String> firstPaths = first.getFilePaths();
         List<String> secondPaths = second.getFilePaths();

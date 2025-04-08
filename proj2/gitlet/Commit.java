@@ -126,4 +126,8 @@ public class Commit implements Serializable {
         }
         return blobIDs;
     }
+
+    public String getMessage() {
+        return message;
+    }
 }
