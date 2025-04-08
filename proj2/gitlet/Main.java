@@ -72,6 +72,11 @@ public class Main {
                 Repository.checkInitialized();
                 Repository.findCommand(args[1]);
                 break;
+            case "status":
+                validateNumArgs(args, 1);
+                Repository.checkInitialized();
+                Repository.statusCommand();
+                break;
 
             default:
                 Repository.printErrorAndExit("No command with that name exists.");

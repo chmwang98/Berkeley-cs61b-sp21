@@ -291,6 +291,42 @@ public class Repository {
         }
     }
 
+    public static void statusCommand() {
+        printBranches();
+        printStagedFiles();
+
+
+        // files in the remove stage
+        System.out.println("=== Removed Files ===");
+        System.out.println();
+
+        System.out.println("=== Modifications Not Staged For Commit ===");
+        System.out.println();
+
+        System.out.println("=== Untracked Files ===");
+        System.out.println();
+    }
+
+    private static void printBranches() {
+        System.out.println("=== Branches ===");
+        currentBranch = readCurrentBranch();
+        List<String> branchList = plainFilenamesIn(HEADS_DIR);
+        for (String branch : branchList) {
+            if (branch.equals(currentBranch)) {
+                System.out.print("*");
+            }
+            System.out.println(branch);
+        }
+        System.out.println();
+    }
+
+    private static void printStagedFiles() {
+        System.out.println("=== Staged Files ===");
+        addStage = readStage(ADDSTAGE_FILE);
+        for (Blob b : addStage.get)
+        System.out.println();
+    }
+
     private static List<String> findOnlyTrackedByFirst(Commit first, Commit second) {
         List<String> firstPaths = first.getFilePaths();
         List<String> secondPaths = second.getFilePaths();
