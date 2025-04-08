@@ -77,6 +77,11 @@ public class Main {
                 Repository.checkInitialized();
                 Repository.statusCommand();
                 break;
+            case "branch":
+                validateNumArgs(args, 2);
+                Repository.checkInitialized();
+                Repository.branchCommand(args[1]);
+                break;
 
             default:
                 Repository.printErrorAndExit("No command with that name exists.");

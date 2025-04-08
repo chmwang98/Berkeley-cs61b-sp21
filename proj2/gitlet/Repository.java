@@ -323,6 +323,16 @@ public class Repository {
         System.out.println();
     }
 
+    public static void branchCommand(String branch) {
+        // if branch already exists, print error
+        File branchFile = join(HEADS_DIR, branch);
+        if (branchFile.exists()) {
+            printErrorAndExit("A branch with that name already exists.");
+        }
+        String commitID = readBranchCommitID(readCurrentBranch());
+        writeContents(branchFile, commitID);
+    }
+
     private static List<String> findOnlyTrackedByFirst(Commit first, Commit second) {
         List<String> firstNames = first.getFileNames();
         List<String> secondNames = second.getFileNames();
