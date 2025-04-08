@@ -30,7 +30,7 @@ public class Commit implements Serializable {
     private String message;
     private Date currentTime;
     private String timeStamp;
-    private Map<String, String> mapFilePathToBlobID;
+    private Map<String, String> mapFileNameToBlobID;
     private List<String> parents;
     private String id;
     private File commitFile;
@@ -39,17 +39,17 @@ public class Commit implements Serializable {
         message = "initial commit";
         currentTime = new Date(0);
         timeStamp = generateTimeStamp();
-        mapFilePathToBlobID = new TreeMap<>();
+        mapFileNameToBlobID = new TreeMap<>();
         parents = new ArrayList<>();
         id = generateID();
         commitFile = generateCommitFile();
     }
 
-    public Commit(String message, Map<String, String> mapFilePathToBlobID, List<String> parents) {
+    public Commit(String message, Map<String, String> mapFileNameToBlobID, List<String> parents) {
         this.message = message;
         currentTime = new Date();
         timeStamp = generateTimeStamp();
-        this.mapFilePathToBlobID = mapFilePathToBlobID;
+        this.mapFileNameToBlobID = mapFileNameToBlobID;
         this.parents = parents;
         id = generateID();
         commitFile = generateCommitFile();
@@ -61,7 +61,7 @@ public class Commit implements Serializable {
     }
 
     private String generateID() {
-        return Utils.sha1(message, timeStamp, mapFilePathToBlobID.toString(), parents.toString());
+        return Utils.sha1(message, timeStamp, mapFileNameToBlobID.toString(), parents.toString());
     }
 
     private File generateCommitFile() {
@@ -72,24 +72,24 @@ public class Commit implements Serializable {
         writeObject(commitFile, this);
     }
 
-    public boolean isFilePathInCommit(String filePath) {
-        return mapFilePathToBlobID.containsKey(filePath);
+    public boolean isFileNameInCommit(String fileName) {
+        return mapFileNameToBlobID.containsKey(fileName);
     }
 
     public boolean isBlobInCommit(Blob blob) {
-        return mapFilePathToBlobID.containsValue(blob.getID());
+        return mapFileNameToBlobID.containsValue(blob.getID());
     }
 
-    public String getBlobIDByFilePath(String filePath) {
-        return mapFilePathToBlobID.get(filePath);
+    public String getBlobIDByFileName(String fileName) {
+        return mapFileNameToBlobID.get(fileName);
     }
 
     public String getID() {
         return id;
     }
 
-    public Map<String, String> getMapFilePathToBlobID() {
-        return mapFilePathToBlobID;
+    public Map<String, String> getMapFileNameToBlobID() {
+        return mapFileNameToBlobID;
     }
 
     public List<String> getParentsID() {
@@ -111,17 +111,17 @@ public class Commit implements Serializable {
         return parents.size() > 1;
     }
 
-    public List<String> getFilePaths() {
-        List<String> filePaths = new ArrayList<>();
-        for (String filePath : mapFilePathToBlobID.keySet()) {
-            filePaths.add(filePath);
+    public List<String> getFileNames() {
+        List<String> fileNames = new ArrayList<>();
+        for (String fileName : mapFileNameToBlobID.keySet()) {
+            fileNames.add(fileName);
         }
-        return filePaths;
+        return fileNames;
     }
 
     public List<String> getBlobIDs() {
         List<String> blobIDs = new ArrayList<>();
-        for (String blobID : mapFilePathToBlobID.values()) {
+        for (String blobID : mapFileNameToBlobID.values()) {
             blobIDs.add(blobID);
         }
         return blobIDs;

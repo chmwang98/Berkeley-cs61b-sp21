@@ -9,9 +9,9 @@ import static gitlet.Utils.*;
 import static gitlet.Repository.*;
 
 public class Blob implements Serializable {
-    // name, path and content of the file to be converted to blob
+    // name, Name and content of the file to be converted to blob
     private File file;
-    private String filePath;
+    private String fileName;
     private String content;
 
     private String id;
@@ -19,18 +19,14 @@ public class Blob implements Serializable {
 
     public Blob(File file) {
         this.file = file;
-        filePath = file.getPath();
+        fileName = file.getName();
         content = readContentsAsString(file);
         id = generateID();
         blobFile = generateBlobFile();
     }
 
     public String getFileName() {
-        return file.getName();
-    }
-
-    public String getFilePath() {
-        return filePath;
+        return fileName;
     }
 
     public String getContent() {
@@ -42,7 +38,7 @@ public class Blob implements Serializable {
     }
 
     private String generateID() {
-        return sha1(filePath, content);
+        return sha1(content);
     }
 
     private File generateBlobFile() {

@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.SimpleTimeZone;
 
 import static gitlet.Utils.*;
 
@@ -84,7 +83,6 @@ public class Repository {
      * */
     public static void addCommand(String fileName) {
         File file = join(CWD, fileName);
-        String filePath = file.getPath();
         if (!file.exists()) {
             printErrorAndExit("File does not exist.");
         }
@@ -100,13 +98,13 @@ public class Repository {
             addStage.saveStage();
         } else if (currentCommit.isBlobInCommit(blob) && !addStage.isBlobInStage(blob)) {
             // if the file is the same as current commit, but added into the add stage, remove it from stage
-            addStage.removeFilePathFromStage(filePath);
+            addStage.removeFileNameFromStage(fileName);
             addStage.saveStage();
         }
 
         // remove file from the remove stage
-        if (removeStage.isFilePathInStage(filePath)) {
-            removeStage.removeFilePathFromStage(filePath);
+        if (removeStage.isFileNameInStage(fileName)) {
+            removeStage.removeFileNameFromStage(fileName);
             removeStage.saveStage();
         }
     }
@@ -119,25 +117,25 @@ public class Repository {
         // if no files in add and remove stage, abort it
         addStage = readStage(ADDSTAGE_FILE);
         removeStage = readStage(REMOVESTAGE_FILE);
-        Map<String, String> addMap = addStage.getMapFilePathToBlobID();
-        Map<String, String> removeMap = removeStage.getMapFilePathToBlobID();
+        Map<String, String> addMap = addStage.getMapFileNameToBlobID();
+        Map<String, String> removeMap = removeStage.getMapFileNameToBlobID();
         if (addMap.isEmpty() && removeMap.isEmpty()) {
             printErrorAndExit("No changes added to the commit.");
         }
 
         // get current commit and map
         currentCommit = readBranchCommit(readCurrentBranch());
-        Map<String, String> commitMap = currentCommit.getMapFilePathToBlobID();
+        Map<String, String> commitMap = currentCommit.getMapFileNameToBlobID();
 
         // calculate new mappings
         if (!addMap.isEmpty()) {
-            for (String filePath : addMap.keySet()) {
-                commitMap.put(filePath, addMap.get(filePath));
+            for (String fileName : addMap.keySet()) {
+                commitMap.put(fileName, addMap.get(fileName));
             }
         }
         if (!removeMap.isEmpty()) {
-            for (String filePath : removeMap.keySet()) {
-                commitMap.remove(filePath);
+            for (String fileName : removeMap.keySet()) {
+                commitMap.remove(fileName);
             }
         }
 
@@ -165,22 +163,21 @@ public class Repository {
     public static void rmCommand(String fileName) {
         File file = join(CWD, fileName);
         // create a blob for the file
-        String filePath = file.getPath();
         currentCommit = readBranchCommit(readCurrentBranch());
         addStage = readStage(ADDSTAGE_FILE);
         removeStage = readStage(REMOVESTAGE_FILE);
 
         // if the file is in the add stage, remove it
-        if (addStage.isFilePathInStage(filePath)) {
-            addStage.removeFilePathFromStage(filePath);
+        if (addStage.isFileNameInStage(fileName)) {
+            addStage.removeFileNameFromStage(fileName);
             addStage.saveStage();
-        } else if (currentCommit.isFilePathInCommit(filePath)) {
+        } else if (currentCommit.isFileNameInCommit(fileName)) {
             // if file is tracked in the current commit, add file to remove stage
-            String blobID = currentCommit.getBlobIDByFilePath(filePath);
-            removeStage.addFilePathAndBlobIDToStage(filePath, blobID);
+            String blobID = currentCommit.getBlobIDByFileName(fileName);
+            removeStage.addFileNameAndBlobIDToStage(fileName, blobID);
             removeStage.saveStage();
             // remove file from working directory
-            restrictedDelete(filePath);
+            restrictedDelete(fileName);
         } else {
             printErrorAndExit("No reason to remove the file.");
         }
@@ -215,15 +212,13 @@ public class Repository {
             commit = readCommitByID(commitID);
         }
 
-        List<String> filePaths = commit.getFilePaths();
-        File file = join(CWD, fileName);
-        String filePath = file.getPath();
+        List<String> fileNames = commit.getFileNames();
         // if file is not tracked by given commit, print error
-        if (!filePaths.contains(filePath)) {
+        if (!fileNames.contains(fileName)) {
             printErrorAndExit("File does not exist in that commit.");
         }
         // get blob from given commit and write to CWD
-        String blobID = commit.getBlobIDByFilePath(filePath);
+        String blobID = commit.getBlobIDByFileName(fileName);
         Blob blob = readBlobByID(blobID);
         blob.writeBlobToCWD();
     }
@@ -243,18 +238,18 @@ public class Repository {
         Commit newCommit = readBranchCommit(branch);
 
         // files only tracked by new commit will be checked
-        List<String> onlyNewCommitTrackedPaths = findOnlyTrackedByFirst(newCommit, currentCommit);
+        List<String> onlyNewCommitTrackedNames = findOnlyTrackedByFirst(newCommit, currentCommit);
         // if change files which are untracked by current commit, print error
-        for (String filePath : onlyNewCommitTrackedPaths) {
-            File file = new File(filePath);
+        for (String fileName : onlyNewCommitTrackedNames) {
+            File file = new File(fileName);
             if (file.exists()) {
                 printErrorAndExit("There is an untracked file in the way; delete it, or add and commit it first.");
             }
         }
         // files only tracked by current commit should be deleted
-        List<String> onlyCurrentCommitTrackedPaths = findOnlyTrackedByFirst(currentCommit, newCommit);
-        for (String filePath: onlyCurrentCommitTrackedPaths) {
-            File file = new File(filePath);
+        List<String> onlyCurrentCommitTrackedNames = findOnlyTrackedByFirst(currentCommit, newCommit);
+        for (String fileName: onlyCurrentCommitTrackedNames) {
+            File file = new File(fileName);
             restrictedDelete(file);
         }
         // write all files from new commit into CWD
@@ -323,19 +318,19 @@ public class Repository {
     private static void printStagedFiles() {
         System.out.println("=== Staged Files ===");
         addStage = readStage(ADDSTAGE_FILE);
-        for (Blob b : addStage.get)
+//        for (Blob b : addStage.get)
         System.out.println();
     }
 
     private static List<String> findOnlyTrackedByFirst(Commit first, Commit second) {
-        List<String> firstPaths = first.getFilePaths();
-        List<String> secondPaths = second.getFilePaths();
-        for (String s : firstPaths) {
-            if (secondPaths.contains(s)) {
-                firstPaths.remove(s);
+        List<String> firstNames = first.getFileNames();
+        List<String> secondNames = second.getFileNames();
+        for (String s : firstNames) {
+            if (secondNames.contains(s)) {
+                firstNames.remove(s);
             }
         }
-        return firstPaths;
+        return firstNames;
     }
 
     private static Blob readBlobByID(String id) {
