@@ -42,7 +42,7 @@ public class Main {
                         if (!args[1].equals("--")) {
                             Repository.printErrorAndExit("Incorrect operands.");
                         }
-                        Repository.checkoutCommand(args[2]);
+                        Repository.checkoutCommand("HEAD", args[2]);
                         break;
                     case 4:
                         if (!args[2].equals("--")) {

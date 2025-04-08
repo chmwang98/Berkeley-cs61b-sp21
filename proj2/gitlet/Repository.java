@@ -2,6 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.ObjectStreamException;
+import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -208,38 +209,53 @@ public class Repository {
         }
     }
 
-    // discard changes to the file, set it to the version in HEAD commit (!!! not the latest commit in branch)
-    public static void checkoutCommand(String fileName) {
-        currentCommit = readCurrentCommit();
-        List<String> filePaths = currentCommit.getFilePaths();
+    // discard changes to the file, set it to the version in given commit (!!! not the latest commit in branch)
+    public static void checkoutCommand(String commitID, String fileName) {
+        Commit commit;
+        if (commitID.equals("HEAD")) {
+            commit = readCurrentCommit();
+        } else {
+            commit = readCommitByID(commitID);
+        }
+
+        List<String> filePaths = commit.getFilePaths();
         File file = join(CWD, fileName);
         String filePath = file.getPath();
-        // if file is not tracked by HEAD, print error
+        // if file is not tracked by given commit, print error
         if (!filePaths.contains(filePath)) {
             printErrorAndExit("File does not exist in that commit.");
         }
-        // get blob from current commit and write to CWD
-        String blobID = currentCommit.getBlobIDByFilePath(filePath);
-        Blob blob = getBlobByID(blobID);
+        // get blob from given commit and write to CWD
+        String blobID = commit.getBlobIDByFilePath(filePath);
+        Blob blob = readBlobByID(blobID);
         blob.writeBlobToCWD();
-    }
-
-    public static void checkoutCommand(String commitID, String fileName) {
-
     }
 
     public static void checkoutBranchCommand(String branch) {
 
     }
 
-    private static Blob getBlobByID(String id) {
+    private static Blob readBlobByID(String id) {
         File blobFile = join(OBJECT_DIR, id);
         return readObject(blobFile, Blob.class);
     }
 
-    private static Commit readCommitByID(String id) {
-        File CURR_COMMIT_FILE = join(OBJECT_DIR, id);
-        return readObject(CURR_COMMIT_FILE, Commit.class);
+    private static Commit readCommitByID(String commitID) {
+        if (commitID.length() == 40) {
+            File CURR_COMMIT_FILE = join(OBJECT_DIR, commitID);
+            if (CURR_COMMIT_FILE.exists()){
+                return readObject(CURR_COMMIT_FILE, Commit.class);
+            }
+        } else {
+            List<String> objects = plainFilenamesIn(OBJECT_DIR);
+            for (String id : objects) {
+                if (commitID.equals(id.substring(0, commitID.length()))) {
+                    return readCommitByID(id);
+                }
+            }
+        }
+        printErrorAndExit("No commit with that id exists.");
+        return null;
     }
 
     private static Commit readCurrentCommit() {
