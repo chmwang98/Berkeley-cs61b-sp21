@@ -2,8 +2,6 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Map;
-import java.util.TreeMap;
 
 import static gitlet.Utils.*;
 import static gitlet.Repository.*;

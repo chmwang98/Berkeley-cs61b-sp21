@@ -7,17 +7,12 @@ import java.util.Map;
 
 import static gitlet.Utils.*;
 
-// TODO: any imports you need here
-
 /** Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
  *
  *  @author ming
  */
 public class Repository {
     /**
-     * TODO: add instance variables here.
      *
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
@@ -47,7 +42,6 @@ public class Repository {
      * Creates a new Gitlet version-control system in the current directory.
      * This system will automatically start with one commit that contains no files and has the commit message.
      * It will have a single branch: master, which initially points to this initial commit.
-     * TODO: Master will be the current branch.
      * The timestamp for this initial commit will be 00:00:00 UTC, Thursday, 1 January 1970.
      * Since the initial commit in all repositories created by Gitlet will have exactly the same content,
      * it follows that all repositories will automatically share this commit (they will all have the same UID)
@@ -289,11 +283,7 @@ public class Repository {
     public static void statusCommand() {
         printBranches();
         printStagedFiles();
-
-
-        // files in the remove stage
-        System.out.println("=== Removed Files ===");
-        System.out.println();
+        printRemovedFiles();
 
         System.out.println("=== Modifications Not Staged For Commit ===");
         System.out.println();
@@ -318,7 +308,18 @@ public class Repository {
     private static void printStagedFiles() {
         System.out.println("=== Staged Files ===");
         addStage = readStage(ADDSTAGE_FILE);
-//        for (Blob b : addStage.get)
+        for (String fileName : addStage.getMapFileNameToBlobID().keySet()) {
+            System.out.println(fileName);
+        }
+        System.out.println();
+    }
+
+    private static void printRemovedFiles() {
+        System.out.println("=== Removed Files ===");
+        removeStage = readStage(REMOVESTAGE_FILE);
+        for (String fileName : removeStage.getMapFileNameToBlobID().keySet()) {
+            System.out.println(fileName);
+        }
         System.out.println();
     }
 
