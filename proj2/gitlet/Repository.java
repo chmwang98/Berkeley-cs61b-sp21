@@ -112,7 +112,7 @@ public class Repository {
     }
 
     public static void commitCommand(String message) {
-        if (message == "") {
+        if (message.equals("")) {
             printErrorAndExit("Please enter a commit message.");
         }
 
