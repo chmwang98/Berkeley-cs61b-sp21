@@ -33,23 +33,24 @@ public class Repository {
     public static final File ADDSTAGE_FILE = join(GITLET_DIR, "add_stage");
     public static final File REMOVESTAGE_FILE = join(GITLET_DIR, "remove_stage");
 
-    public static Commit currentCommit;
-    public static Stage addStage = new Stage(ADDSTAGE_FILE);
-    public static Stage removeStage = new Stage(REMOVESTAGE_FILE);
-    public static String currentBranch;
+    private static Commit currentCommit;
+    private static Stage addStage = new Stage(ADDSTAGE_FILE);
+    private static Stage removeStage = new Stage(REMOVESTAGE_FILE);
+    private static String currentBranch;
 
     /**
      * Creates a new Gitlet version-control system in the current directory.
-     * This system will automatically start with one commit that contains no files and has the commit message.
+     * Start with one commit that contains no files and has the commit message.
      * It will have a single branch: master, which initially points to this initial commit.
      * The timestamp for this initial commit will be 00:00:00 UTC, Thursday, 1 January 1970.
-     * Since the initial commit in all repositories created by Gitlet will have exactly the same content,
-     * it follows that all repositories will automatically share this commit (they will all have the same UID)
+     * Initial commit in all repositories created by Gitlet will have the same content,
+     * all repositories will share this commit (they will all have the same UID)
      * and all commits in all repositories will trace back to it.
      * */
     public static void initCommand() {
         if (GITLET_DIR.exists()) {
-            printErrorAndExit("A Gitlet version-control system already exists in the current directory.");
+            printErrorAndExit("A Gitlet version-control system " +
+                    "already exists in the current directory.");
         }
         GITLET_DIR.mkdir();
         OBJECT_DIR.mkdir();
@@ -61,19 +62,20 @@ public class Repository {
         initialCommit.save();
 
         writeContents(HEAD_FILE, "master");
-        File HEADS_FILE = join(HEADS_DIR, "master");
-        writeContents(HEADS_FILE, currentCommit.getID());
+        File masterHead = join(HEADS_DIR, "master");
+        writeContents(masterHead, currentCommit.getID());
     }
 
     /**
      * Adds a copy of the file as it currently exists to the staging area.
      * For this reason, adding a file is also called staging the file for addition.
-     * Staging an already-staged file overwrites the previous entry in the staging area with the new contents.
+     * Staging already-staged file overwrites in the staging area with new contents.
      * The staging area should be somewhere in .gitlet.
-     * If the current working version of the file is identical to the version in the current commit,
-     * do not currentStage it to be added, and remove it from the staging area if it is already there
-     * (as can happen when a file is changed, added, and then changed back to it’s original version).
-     * The file will no longer be staged for removal (see gitlet rm), if it was at the time of the command.
+     * If current working version of the file is identical to the version in the current commit,
+     * do not currentStage it to be added, and remove it from the staging area
+     * (as can happen when a file is changed, added, and then changed back).
+     * The file will no longer be staged for removal (see gitlet rm),
+     * if it was at the time of the command.
      * */
     public static void addCommand(String fileName) {
         File file = join(CWD, fileName);
@@ -86,12 +88,12 @@ public class Repository {
         currentCommit = readBranchCommit(readCurrentBranch());
         addStage = readStage(ADDSTAGE_FILE);
         removeStage = readStage(REMOVESTAGE_FILE);
-        // if the blob in neither in the current commit, nor in the current stage, add it to currentStage
+        // if blob is neither in current commit, nor in current stage, stage it
         if (!currentCommit.isBlobInCommit(blob) && !addStage.isBlobInStage(blob)) {
             addStage.addBlobToStage(blob);
             addStage.saveStage();
         } else if (currentCommit.isBlobInCommit(blob) && !addStage.isBlobInStage(blob)) {
-            // if the file is the same as current commit, but added into the add stage, remove it from stage
+            // if file is same as current commit, but added into the add stage, remove from stage
             addStage.removeFileNameFromStage(fileName);
             addStage.saveStage();
         }
@@ -150,8 +152,8 @@ public class Repository {
 
         // change the HEAD pointer
         String currentBranch = readCurrentBranch();
-        File HEADS_FILE = join(HEADS_DIR, currentBranch);
-        writeContents(HEADS_FILE, currentCommit.getID());
+        File branchHead = join(HEADS_DIR, currentBranch);
+        writeContents(branchHead, currentCommit.getID());
     }
 
     public static void rmCommand(String fileName) {
@@ -197,7 +199,8 @@ public class Repository {
         }
     }
 
-    // discard changes to the file, set it to the version in given commit (!!! not the latest commit in branch)
+    // discard changes to the file, set it to the version in given commit
+    // (!!! not the latest commit in branch)
     public static void checkoutCommand(String commitID, String fileName) {
         Commit commit;
         if (commitID.equals("HEAD")) {
@@ -239,17 +242,18 @@ public class Repository {
 
     private static void changeCommit(Commit newCommit) {
         // files only tracked by new commit will be checked
-        List<String> onlyNewCommitTrackedNames = findOnlyTrackedByFirst(newCommit, currentCommit);
+        List<String> filesToWrite = findOnlyTrackedByFirst(newCommit, currentCommit);
         // if change files which are untracked by current commit, print error
-        for (String fileName : onlyNewCommitTrackedNames) {
+        for (String fileName : filesToWrite) {
             File file = new File(fileName);
             if (file.exists()) {
-                printErrorAndExit("There is an untracked file in the way; delete it, or add and commit it first.");
+                printErrorAndExit("There is an untracked file in the way; " +
+                        "delete it, or add and commit it first.");
             }
         }
         // files only tracked by current commit should be deleted
-        List<String> onlyCurrentCommitTrackedNames = findOnlyTrackedByFirst(currentCommit, newCommit);
-        for (String fileName: onlyCurrentCommitTrackedNames) {
+        List<String> filesToDelete = findOnlyTrackedByFirst(currentCommit, newCommit);
+        for (String fileName: filesToDelete) {
             File file = new File(fileName);
             restrictedDelete(file);
         }
@@ -364,6 +368,10 @@ public class Repository {
         writeContents(branchFile, commitID);
     }
 
+    public static void mergeCommand(String branch) {
+
+    }
+
     private static List<String> findOnlyTrackedByFirst(Commit first, Commit second) {
         List<String> firstNames = first.getFileNames();
         List<String> secondNames = second.getFileNames();
@@ -382,9 +390,9 @@ public class Repository {
 
     private static Commit readCommitByID(String commitID) {
         if (commitID.length() == 40) {
-            File CURR_COMMIT_FILE = join(OBJECT_DIR, commitID);
-            if (CURR_COMMIT_FILE.exists()){
-                return readObject(CURR_COMMIT_FILE, Commit.class);
+            File currCommitFile = join(OBJECT_DIR, commitID);
+            if (currCommitFile.exists()) {
+                return readObject(currCommitFile, Commit.class);
             }
         } else {
             List<String> objects = plainFilenamesIn(OBJECT_DIR);
@@ -400,8 +408,8 @@ public class Repository {
 
     private static Commit readBranchCommit(String branch) {
         String commitID = readBranchCommitID(branch);
-        File COMMIT_FILE = join(OBJECT_DIR, commitID);
-        return readObject(COMMIT_FILE, Commit.class);
+        File commitFile = join(OBJECT_DIR, commitID);
+        return readObject(commitFile, Commit.class);
     }
 
     private static String readBranchCommitID(String branch) {
@@ -414,11 +422,11 @@ public class Repository {
     }
 
     // read the content in stage or create a new if empty
-    private static Stage readStage(File STAGE_FILE) {
-        if (!STAGE_FILE.exists()) {
-            return new Stage(STAGE_FILE);
+    private static Stage readStage(File stageFile) {
+        if (!stageFile.exists()) {
+            return new Stage(stageFile);
         }
-        return readObject(STAGE_FILE, Stage.class);
+        return readObject(stageFile, Stage.class);
     }
 
     // Commands other than 'init' have to be executed in initialized directory
