@@ -56,8 +56,9 @@ public class Commit implements Serializable {
     }
 
     public String generateTimeStamp() {
-        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss zzz, EEEE, d MMM, yyyy");
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+//        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss zzz, EEEE, d MMM, yyyy");
+//        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        DateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy ZZZZ");
         return dateFormat.format(currentTime);
     }
 
@@ -99,11 +100,11 @@ public class Commit implements Serializable {
 
     public void printCommit() {
         System.out.println("===");
-        System.out.println(id);
+        System.out.println("commit " + id);
         if (isMerged()){
             System.out.println("Merge:" + parents.get(0).substring(0, 7) + parents.get(1).substring(0, 7));
         }
-        System.out.println(timeStamp);
+        System.out.println("Date: " + timeStamp);
         System.out.println(message);
         System.out.println();
     }
