@@ -92,4 +92,31 @@ public class Commit implements Serializable {
     public Map<String, String> getMapFilePathToBlobID() {
         return mapFilePathToBlobID;
     }
+
+    public List<String> getParentsID() {
+        return parents;
+    }
+
+    public void printCommit() {
+        System.out.println("===");
+        System.out.println(id);
+        if (isMerged()){
+            System.out.println("Merge:" + parents.get(0).substring(0, 7) + parents.get(1).substring(0, 7));
+        }
+        System.out.println(timeStamp);
+        System.out.println(message);
+        System.out.println();
+    }
+
+    private boolean isMerged() {
+        return parents.size() > 1;
+    }
+
+    public List<String> getFilePaths() {
+        List<String> filePaths = new ArrayList<>();
+        for (String filePath : mapFilePathToBlobID.keySet()) {
+            filePaths.add(filePath);
+        }
+        return filePaths;
+    }
 }

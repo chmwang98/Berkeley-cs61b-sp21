@@ -1,8 +1,10 @@
 package gitlet;
 
 import java.io.File;
+import java.io.ObjectStreamException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -90,6 +92,7 @@ public class Repository {
         }
         // create a blob for the file
         Blob blob = new Blob(file);
+        blob.storeBlob();
         currentCommit = readCurrentCommit();
         addStage = readStage(ADDSTAGE_FILE);
         removeStage = readStage(REMOVESTAGE_FILE);
@@ -178,9 +181,65 @@ public class Repository {
             String blobID = currentCommit.getBlobIDByFilePath(filePath);
             removeStage.addFilePathAndBlobIDToStage(filePath, blobID);
             removeStage.saveStage();
+            // remove file from working directory
+            restrictedDelete(filePath);
         } else {
             printErrorAndExit("No reason to remove the file.");
         }
+
+    }
+
+    public static void logCommand() {
+        currentCommit = readCurrentCommit();
+        while (!currentCommit.getParentsID().isEmpty()) {
+            currentCommit.printCommit();
+            // ignore second parent in merge
+            String parentCommitID = currentCommit.getParentsID().get(0);
+            currentCommit = readCommitByID(parentCommitID);
+        }
+        currentCommit.printCommit();
+    }
+
+    public static void globallogCommand() {
+        List<String> commitList = plainFilenamesIn(OBJECT_DIR);
+        for (String id : commitList) {
+            currentCommit = readCommitByID(id);
+            currentCommit.printCommit();
+        }
+    }
+
+    // discard changes to the file, set it to the version in HEAD commit (!!! not the latest commit in branch)
+    public static void checkoutCommand(String fileName) {
+        currentCommit = readCurrentCommit();
+        List<String> filePaths = currentCommit.getFilePaths();
+        File file = join(CWD, fileName);
+        String filePath = file.getPath();
+        // if file is not tracked by HEAD, print error
+        if (!filePaths.contains(filePath)) {
+            printErrorAndExit("File does not exist in that commit.");
+        }
+        // get blob from current commit and write to CWD
+        String blobID = currentCommit.getBlobIDByFilePath(filePath);
+        Blob blob = getBlobByID(blobID);
+        blob.writeBlobToCWD();
+    }
+
+    public static void checkoutCommand(String commitID, String fileName) {
+
+    }
+
+    public static void checkoutBranchCommand(String branch) {
+
+    }
+
+    private static Blob getBlobByID(String id) {
+        File blobFile = join(OBJECT_DIR, id);
+        return readObject(blobFile, Blob.class);
+    }
+
+    private static Commit readCommitByID(String id) {
+        File CURR_COMMIT_FILE = join(OBJECT_DIR, id);
+        return readObject(CURR_COMMIT_FILE, Commit.class);
     }
 
     private static Commit readCurrentCommit() {

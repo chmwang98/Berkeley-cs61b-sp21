@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static gitlet.Utils.*;
-import static gitlet.Repository.OBJECT_DIR;
+import static gitlet.Repository.*;
 
 public class Blob implements Serializable {
     // name, path and content of the file to be converted to blob
@@ -54,5 +54,9 @@ public class Blob implements Serializable {
             return;
         }
         writeObject(blobFile, this);
+    }
+
+    public void writeBlobToCWD() {
+        writeContents(file, content);
     }
 }

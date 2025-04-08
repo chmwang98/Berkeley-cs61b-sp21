@@ -36,9 +36,38 @@ public class Main {
                 Repository.rmCommand(args[1]);
                 break;
             case "checkout":
+                Repository.checkInitialized();
+                switch (args.length) {
+                    case 3:
+                        if (!args[1].equals("--")) {
+                            Repository.printErrorAndExit("Incorrect operands.");
+                        }
+                        Repository.checkoutCommand(args[2]);
+                        break;
+                    case 4:
+                        if (!args[2].equals("--")) {
+                            Repository.printErrorAndExit("Incorrect operands.");
+                        }
+                        Repository.checkoutCommand(args[1], args[3]);
+                        break;
+                    case 2:
+                        Repository.checkoutBranchCommand(args[1]);
+                        break;
+                    default:
+                        Repository.printErrorAndExit("Incorrect operands.");
+                }
                 break;
             case "log":
+                validateNumArgs(args, 1);
+                Repository.checkInitialized();
+                Repository.logCommand();
                 break;
+            case "global-log":
+                validateNumArgs(args, 1);
+                Repository.checkInitialized();
+                Repository.globallogCommand();
+                break;
+
             default:
                 Repository.printErrorAndExit("No command with that name exists.");
         }
