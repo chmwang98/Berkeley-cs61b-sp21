@@ -329,8 +329,23 @@ public class Repository {
         if (branchFile.exists()) {
             printErrorAndExit("A branch with that name already exists.");
         }
+        // get the commit id of current branch and save to new branch
         String commitID = readBranchCommitID(readCurrentBranch());
         writeContents(branchFile, commitID);
+    }
+
+    public static void rmbranchCommand(String branch) {
+        // if branch doesn't exist, print error
+        File branchFile = join(HEADS_DIR, branch);
+        if (!branchFile.exists()) {
+            printErrorAndExit("A branch with that name does not exist.");
+        }
+        // make sure the branch to delete is not the current branch
+        if (branch.equals(readCurrentBranch())) {
+            printErrorAndExit("Cannot remove the current branch.");
+        }
+        // delete the branch only, not the commits
+        restrictedDelete(branchFile);
     }
 
     private static List<String> findOnlyTrackedByFirst(Commit first, Commit second) {

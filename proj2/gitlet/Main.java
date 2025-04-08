@@ -82,6 +82,11 @@ public class Main {
                 Repository.checkInitialized();
                 Repository.branchCommand(args[1]);
                 break;
+            case "rm-branch":
+                validateNumArgs(args, 2);
+                Repository.checkInitialized();
+                Repository.rmbranchCommand(args[1]);
+                break;
 
             default:
                 Repository.printErrorAndExit("No command with that name exists.");
