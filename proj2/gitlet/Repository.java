@@ -227,10 +227,17 @@ public class Repository {
         if (branch.equals(readCurrentBranch())) {
             printErrorAndExit("No need to checkout the current branch.");
         }
+
         // get current commit and checked-out commit
         currentCommit = readBranchCommit(readCurrentBranch());
         Commit newCommit = readBranchCommit(branch);
+        changeCommit(newCommit);
 
+        // check out to new branch
+        writeContents(HEAD_FILE, branch);
+    }
+
+    private static void changeCommit(Commit newCommit) {
         // files only tracked by new commit will be checked
         List<String> onlyNewCommitTrackedNames = findOnlyTrackedByFirst(newCommit, currentCommit);
         // if change files which are untracked by current commit, print error
@@ -259,9 +266,6 @@ public class Repository {
         removeStage = readStage(REMOVESTAGE_FILE);
         removeStage.clear();
         removeStage.saveStage();
-
-        // check out to new branch
-        writeContents(HEAD_FILE, branch);
     }
 
     public static void findCommand(String message) {
@@ -346,6 +350,18 @@ public class Repository {
         }
         // delete the branch only, not the commits
         restrictedDelete(branchFile);
+    }
+
+    public static void resetCommand(String commitID) {
+        // check if new commit exists
+        Commit newCommit = readCommitByID(commitID);
+        // change current commit to new commit and write/remove files
+        changeCommit(newCommit);
+
+        // set the current branch HEAD to new commit
+        currentBranch = readCurrentBranch();
+        File branchFile = join(HEADS_DIR, currentBranch);
+        writeContents(branchFile, commitID);
     }
 
     private static List<String> findOnlyTrackedByFirst(Commit first, Commit second) {

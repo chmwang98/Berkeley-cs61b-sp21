@@ -87,6 +87,11 @@ public class Main {
                 Repository.checkInitialized();
                 Repository.rmbranchCommand(args[1]);
                 break;
+            case "reset":
+                validateNumArgs(args, 2);
+                Repository.checkInitialized();
+                Repository.resetCommand(args[1]);
+                break;
 
             default:
                 Repository.printErrorAndExit("No command with that name exists.");
