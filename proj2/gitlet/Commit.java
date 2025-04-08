@@ -56,8 +56,6 @@ public class Commit implements Serializable {
     }
 
     public String generateTimeStamp() {
-//        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss zzz, EEEE, d MMM, yyyy");
-//        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         DateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy ZZZZ");
         return dateFormat.format(currentTime);
     }
@@ -119,5 +117,13 @@ public class Commit implements Serializable {
             filePaths.add(filePath);
         }
         return filePaths;
+    }
+
+    public List<String> getBlobIDs() {
+        List<String> blobIDs = new ArrayList<>();
+        for (String blobID : mapFilePathToBlobID.values()) {
+            blobIDs.add(blobID);
+        }
+        return blobIDs;
     }
 }

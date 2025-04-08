@@ -1,13 +1,10 @@
 package gitlet;
 
 import java.io.File;
-import java.io.ObjectStreamException;
-import java.io.PrintStream;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.SimpleTimeZone;
 
 import static gitlet.Utils.*;
 
@@ -94,7 +91,7 @@ public class Repository {
         // create a blob for the file
         Blob blob = new Blob(file);
         blob.storeBlob();
-        currentCommit = readCurrentCommit();
+        currentCommit = readBranchCommit(readCurrentBranch());
         addStage = readStage(ADDSTAGE_FILE);
         removeStage = readStage(REMOVESTAGE_FILE);
         // if the blob in neither in the current commit, nor in the current stage, add it to currentStage
@@ -129,7 +126,7 @@ public class Repository {
         }
 
         // get current commit and map
-        currentCommit = readCurrentCommit();
+        currentCommit = readBranchCommit(readCurrentBranch());
         Map<String, String> commitMap = currentCommit.getMapFilePathToBlobID();
 
         // calculate new mappings
@@ -169,7 +166,7 @@ public class Repository {
         File file = join(CWD, fileName);
         // create a blob for the file
         String filePath = file.getPath();
-        currentCommit = readCurrentCommit();
+        currentCommit = readBranchCommit(readCurrentBranch());
         addStage = readStage(ADDSTAGE_FILE);
         removeStage = readStage(REMOVESTAGE_FILE);
 
@@ -191,7 +188,7 @@ public class Repository {
     }
 
     public static void logCommand() {
-        currentCommit = readCurrentCommit();
+        currentCommit = readBranchCommit(readCurrentBranch());
         while (!currentCommit.getParentsID().isEmpty()) {
             currentCommit.printCommit();
             // ignore second parent in merge
@@ -213,7 +210,7 @@ public class Repository {
     public static void checkoutCommand(String commitID, String fileName) {
         Commit commit;
         if (commitID.equals("HEAD")) {
-            commit = readCurrentCommit();
+            commit = readBranchCommit(readCurrentBranch());
         } else {
             commit = readCommitByID(commitID);
         }
@@ -232,7 +229,61 @@ public class Repository {
     }
 
     public static void checkoutBranchCommand(String branch) {
+        // if no such branch, print error
+        File branchHead = join(HEADS_DIR, branch);
+        if (!branchHead.exists()) {
+            printErrorAndExit("No such branch exists.");
+        }
+        // if branch is current branch, print error
+        if (branch.equals(readCurrentBranch())) {
+            printErrorAndExit("No need to checkout the current branch.");
+        }
+        // get current commit and checked-out commit
+        currentCommit = readBranchCommit(readCurrentBranch());
+        Commit newCommit = readBranchCommit(branch);
 
+        // files only tracked by new commit will be checked
+        List<String> onlyNewCommitTrackedPaths = findOnlyTrackedByFirst(newCommit, currentCommit);
+        // if change files which are untracked by current commit, print error
+        for (String filePath : onlyNewCommitTrackedPaths) {
+            File file = new File(filePath);
+            if (file.exists()) {
+                printErrorAndExit("There is an untracked file in the way; delete it, or add and commit it first.");
+            }
+        }
+        // files only tracked by current commit should be deleted
+        List<String> onlyCurrentCommitTrackedPaths = findOnlyTrackedByFirst(currentCommit, newCommit);
+        for (String filePath: onlyCurrentCommitTrackedPaths) {
+            File file = new File(filePath);
+            restrictedDelete(file);
+        }
+        // write all files from new commit into CWD
+        for (String blobID : newCommit.getBlobIDs()) {
+            Blob blob = readBlobByID(blobID);
+            blob.writeBlobToCWD();
+        }
+
+        // clear stage of add and delete
+        addStage = readStage(ADDSTAGE_FILE);
+        addStage.clear();
+        addStage.saveStage();
+        removeStage = readStage(REMOVESTAGE_FILE);
+        removeStage.clear();
+        removeStage.saveStage();
+
+        // check out to new branch
+        writeContents(HEAD_FILE, branch);
+    }
+
+    private static List<String> findOnlyTrackedByFirst(Commit first, Commit second) {
+        List<String> firstPaths = first.getFilePaths();
+        List<String> secondPaths = second.getFilePaths();
+        for (String s : firstPaths) {
+            if (secondPaths.contains(s)) {
+                firstPaths.remove(s);
+            }
+        }
+        return firstPaths;
     }
 
     private static Blob readBlobByID(String id) {
@@ -258,15 +309,14 @@ public class Repository {
         return null;
     }
 
-    private static Commit readCurrentCommit() {
-        String currentCommitID = readCurrentCommitID();
-        File CURR_COMMIT_FILE = join(OBJECT_DIR, currentCommitID);
-        return readObject(CURR_COMMIT_FILE, Commit.class);
+    private static Commit readBranchCommit(String branch) {
+        String commitID = readBranchCommitID(branch);
+        File COMMIT_FILE = join(OBJECT_DIR, commitID);
+        return readObject(COMMIT_FILE, Commit.class);
     }
 
-    private static String readCurrentCommitID() {
-        String currentBranch = readCurrentBranch();
-        return readContentsAsString(join(HEADS_DIR, currentBranch));
+    private static String readBranchCommitID(String branch) {
+        return readContentsAsString(join(HEADS_DIR, branch));
     }
 
     // the current branch is saved in HEAD, e.g. 'refs/heads/master'
