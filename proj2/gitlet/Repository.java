@@ -49,8 +49,8 @@ public class Repository {
      * */
     public static void initCommand() {
         if (GITLET_DIR.exists()) {
-            printErrorAndExit("A Gitlet version-control system " +
-                    "already exists in the current directory.");
+            printErrorAndExit("A Gitlet version-control system "
+                    + "already exists in the current directory.");
         }
         GITLET_DIR.mkdir();
         OBJECT_DIR.mkdir();
@@ -151,7 +151,7 @@ public class Repository {
         currentCommit.save();
 
         // change the HEAD pointer
-        String currentBranch = readCurrentBranch();
+        currentBranch = readCurrentBranch();
         File branchHead = join(HEADS_DIR, currentBranch);
         writeContents(branchHead, currentCommit.getID());
     }
