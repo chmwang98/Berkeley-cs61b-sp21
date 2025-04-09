@@ -36,7 +36,7 @@ public class Blob implements Serializable {
     }
 
     private String generateID() {
-        return sha1(content);
+        return sha1(fileName, content);
     }
 
     private File generateBlobFile() {
