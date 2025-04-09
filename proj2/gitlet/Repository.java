@@ -250,8 +250,8 @@ public class Repository {
         for (String fileName : filesToWrite) {
             File file = join(CWD, fileName);
             if (file.exists()) {
-                printErrorAndExit("There is an untracked file in the way; " +
-                        "delete it, or add and commit it first.");
+                printErrorAndExit("There is an untracked file in the way; "
+                        + "delete it, or add and commit it first.");
             }
         }
         // files only tracked by current commit should be deleted
@@ -359,7 +359,7 @@ public class Repository {
             printErrorAndExit("Cannot remove the current branch.");
         }
         // delete the branch only, not the commits
-        restrictedDelete(branchFile);
+        branchFile.delete();
     }
 
     public static void resetCommand(String commitID) {
