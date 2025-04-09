@@ -248,7 +248,7 @@ public class Repository {
         List<String> filesToWrite = findOnlyTrackedByFirst(newCommit, currentCommit);
         // if change files which are untracked by current commit, print error
         for (String fileName : filesToWrite) {
-            File file = new File(fileName);
+            File file = join(CWD, fileName);
             if (file.exists()) {
                 printErrorAndExit("There is an untracked file in the way; " +
                         "delete it, or add and commit it first.");
@@ -366,10 +366,11 @@ public class Repository {
         // check if new commit exists
         Commit newCommit = readCommitByID(commitID);
         // change current commit to new commit and write/remove files
+        currentBranch = readCurrentBranch();
+        currentCommit = readBranchCommit(currentBranch);
         changeCommit(newCommit);
 
         // set the current branch HEAD to new commit
-        currentBranch = readCurrentBranch();
         File branchFile = join(HEADS_DIR, currentBranch);
         writeContents(branchFile, commitID);
     }
@@ -381,12 +382,17 @@ public class Repository {
     private static List<String> findOnlyTrackedByFirst(Commit first, Commit second) {
         List<String> firstNames = first.getFileNames();
         List<String> secondNames = second.getFileNames();
+        /**
+         * create a new list to save result
+         * if simply remove from one list, result will be wrong
+         */
+        List<String> newList = new ArrayList<>();
         for (String s : firstNames) {
-            if (secondNames.contains(s)) {
-                firstNames.remove(s);
+            if (!secondNames.contains(s)) {
+                newList.add(s);
             }
         }
-        return firstNames;
+        return newList;
     }
 
     private static Blob readBlobByID(String id) {
