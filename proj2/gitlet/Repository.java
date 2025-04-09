@@ -194,8 +194,11 @@ public class Repository {
     public static void globallogCommand() {
         List<String> commitList = plainFilenamesIn(OBJECT_DIR);
         for (String id : commitList) {
-            currentCommit = readCommitByID(id);
-            currentCommit.printCommit();
+            try {
+                currentCommit = readCommitByID(id);
+                currentCommit.printCommit();
+            } catch (Exception ignore) {
+            }
         }
     }
 
@@ -277,10 +280,13 @@ public class Repository {
         // find all commits with the message
         List<String> commitList = plainFilenamesIn(OBJECT_DIR);
         for (String id : commitList) {
-            currentCommit = readCommitByID(id);
-            if (message.equals(currentCommit.getMessage())) {
-                System.out.println(currentCommit.getID());
-                noSuchCommit = false;
+            try {
+                currentCommit = readCommitByID(id);
+                if (message.equals(currentCommit.getMessage())) {
+                    System.out.println(currentCommit.getID());
+                    noSuchCommit = false;
+                }
+            } catch (Exception ignore) {
             }
         }
         if (noSuchCommit) {
@@ -395,10 +401,10 @@ public class Repository {
                 return readObject(currCommitFile, Commit.class);
             }
         } else {
-            List<String> objects = plainFilenamesIn(OBJECT_DIR);
-            for (String id : objects) {
+            List<String> objectIDs = plainFilenamesIn(OBJECT_DIR);
+            for (String id : objectIDs) {
                 if (commitID.equals(id.substring(0, commitID.length()))) {
-                    return readCommitByID(id);
+                    return readObject(join(OBJECT_DIR, id), Commit.class);
                 }
             }
         }
