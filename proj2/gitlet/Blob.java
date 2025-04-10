@@ -40,7 +40,7 @@ public class Blob implements Serializable {
     }
 
     private File generateBlobFile() {
-        return join(OBJECT_DIR, id);
+        return join(BLOB_DIR, id);
     }
 
     public void storeBlob() {

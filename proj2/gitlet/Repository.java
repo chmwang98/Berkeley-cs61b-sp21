@@ -23,6 +23,8 @@ public class Repository {
     public static final File GITLET_DIR = join(CWD, ".gitlet");
 
     public static final File OBJECT_DIR = join(GITLET_DIR, "objects");
+    public static final File COMMIT_DIR = join(OBJECT_DIR, "commits");
+    public static final File BLOB_DIR = join(OBJECT_DIR, "blobs");
 
     public static final File REFS_DIR = join(GITLET_DIR, "refs");
     public static final File HEADS_DIR = join(REFS_DIR, "heads");
@@ -52,6 +54,8 @@ public class Repository {
         }
         GITLET_DIR.mkdir();
         OBJECT_DIR.mkdir();
+        COMMIT_DIR.mkdir();
+        BLOB_DIR.mkdir();
         REFS_DIR.mkdir();
         HEADS_DIR.mkdir();
 
@@ -177,13 +181,10 @@ public class Repository {
     }
 
     public static void globallogCommand() {
-        List<String> commitList = plainFilenamesIn(OBJECT_DIR);
+        List<String> commitList = plainFilenamesIn(COMMIT_DIR);
         for (String id : commitList) {
-            try {
-                currentCommit = readCommitByID(id);
-                currentCommit.printCommit();
-            } catch (Exception ignore) {
-            }
+            currentCommit = readCommitByID(id);
+            currentCommit.printCommit();
         }
     }
 
@@ -281,7 +282,7 @@ public class Repository {
     public static void findCommand(String message) {
         Boolean noSuchCommit = true;
         // find all commits with the message
-        List<String> commitList = plainFilenamesIn(OBJECT_DIR);
+        List<String> commitList = plainFilenamesIn(COMMIT_DIR);
         for (String id : commitList) {
             try {
                 currentCommit = readCommitByID(id);
@@ -729,21 +730,21 @@ public class Repository {
     }
 
     private static Blob readBlobByID(String id) {
-        File blobFile = join(OBJECT_DIR, id);
+        File blobFile = join(BLOB_DIR, id);
         return readObject(blobFile, Blob.class);
     }
 
     private static Commit readCommitByID(String commitID) {
         if (commitID.length() == 40) {
-            File currCommitFile = join(OBJECT_DIR, commitID);
+            File currCommitFile = join(COMMIT_DIR, commitID);
             if (currCommitFile.exists()) {
                 return readObject(currCommitFile, Commit.class);
             }
         } else {
-            List<String> objectIDs = plainFilenamesIn(OBJECT_DIR);
+            List<String> objectIDs = plainFilenamesIn(COMMIT_DIR);
             for (String id : objectIDs) {
                 if (commitID.equals(id.substring(0, commitID.length()))) {
-                    return readObject(join(OBJECT_DIR, id), Commit.class);
+                    return readObject(join(COMMIT_DIR, id), Commit.class);
                 }
             }
         }
@@ -753,7 +754,7 @@ public class Repository {
 
     private static Commit readBranchCommit(String branch) {
         String commitID = readBranchCommitID(branch);
-        File commitFile = join(OBJECT_DIR, commitID);
+        File commitFile = join(COMMIT_DIR, commitID);
         return readObject(commitFile, Commit.class);
     }
 

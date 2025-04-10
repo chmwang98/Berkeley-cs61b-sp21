@@ -60,7 +60,7 @@ public class Commit implements Serializable {
     }
 
     private File generateCommitFile() {
-        return join(OBJECT_DIR, id);
+        return join(COMMIT_DIR, id);
     }
 
     public void save() {
