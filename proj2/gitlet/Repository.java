@@ -284,13 +284,10 @@ public class Repository {
         // find all commits with the message
         List<String> commitList = plainFilenamesIn(COMMIT_DIR);
         for (String id : commitList) {
-            try {
-                currentCommit = readCommitByID(id);
-                if (message.equals(currentCommit.getMessage())) {
-                    System.out.println(currentCommit.getID());
-                    noSuchCommit = false;
-                }
-            } catch (Exception ignore) {
+            currentCommit = readCommitByID(id);
+            if (message.equals(currentCommit.getMessage())) {
+                System.out.println(currentCommit.getID());
+                noSuchCommit = false;
             }
         }
         if (noSuchCommit) {
