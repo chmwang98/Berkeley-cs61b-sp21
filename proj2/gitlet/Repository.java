@@ -1,9 +1,7 @@
 package gitlet;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static gitlet.Utils.*;
 
@@ -140,20 +138,7 @@ public class Repository {
         parents.add(currentCommit.getID());
         Commit newCommit = new Commit(message, commitMap, parents);
 
-        // clean add/remove stage files
-        addStage.clear();
-        addStage.saveStage();
-        removeStage.clear();
-        removeStage.saveStage();
-
-        // set the commit as "current commit" and save
-        currentCommit = newCommit;
-        currentCommit.save();
-
-        // change the HEAD pointer
-        currentBranch = readCurrentBranch();
-        File branchHead = join(HEADS_DIR, currentBranch);
-        writeContents(branchHead, currentCommit.getID());
+        saveNewCommit(newCommit);
     }
 
     public static void rmCommand(String fileName) {
@@ -246,6 +231,18 @@ public class Repository {
     private static void changeCommit(Commit newCommit) {
         // files only tracked by new commit will be checked
         List<String> filesToWrite = findOnlyTrackedByFirst(newCommit, currentCommit);
+        writeFiles(filesToWrite, newCommit);
+        // files only tracked by current commit should be deleted
+        List<String> filesToDelete = findOnlyTrackedByFirst(currentCommit, newCommit);
+        deleteFiles(filesToDelete);
+        // files tracked by both should be overwritten
+        List<String> filesToOverwrite = findBothTracked(currentCommit, newCommit);
+        overwriteFiles(filesToOverwrite, newCommit);
+
+        saveNewCommit(newCommit);
+    }
+
+    private static void writeFiles(List<String> filesToWrite, Commit newCommit) {
         // if change files which are untracked by current commit, print error
         for (String fileName : filesToWrite) {
             File file = join(CWD, fileName);
@@ -254,25 +251,21 @@ public class Repository {
                         + "delete it, or add and commit it first.");
             }
         }
-        // files only tracked by current commit should be deleted
-        List<String> filesToDelete = findOnlyTrackedByFirst(currentCommit, newCommit);
-        for (String fileName: filesToDelete) {
-            File file = new File(fileName);
-            restrictedDelete(file);
-        }
-        // write all files from new commit into CWD
-        for (String blobID : newCommit.getBlobIDs()) {
-            Blob blob = readBlobByID(blobID);
+        overwriteFiles(filesToWrite, newCommit);
+    }
+
+    private static void overwriteFiles(List<String> filesToOverwrite, Commit newCommit) {
+        for (String fileName : filesToOverwrite) {
+            Blob blob = readBlobByID(newCommit.getBlobIDByFileName(fileName));
             blob.writeBlobToCWD();
         }
+    }
 
-        // clear stage of add and delete
-        addStage = readStage(ADDSTAGE_FILE);
-        addStage.clear();
-        addStage.saveStage();
-        removeStage = readStage(REMOVESTAGE_FILE);
-        removeStage.clear();
-        removeStage.saveStage();
+    private static void deleteFiles(List<String> filesToDelete) {
+        for (String fileName: filesToDelete) {
+            File file = join(CWD,fileName);
+            restrictedDelete(file);
+        }
     }
 
     public static void findCommand(String message) {
@@ -349,16 +342,13 @@ public class Repository {
     }
 
     public static void rmbranchCommand(String branch) {
-        // if branch doesn't exist, print error
-        File branchFile = join(HEADS_DIR, branch);
-        if (!branchFile.exists()) {
-            printErrorAndExit("A branch with that name does not exist.");
-        }
+        checkIfBranchExists(branch);
         // make sure the branch to delete is not the current branch
         if (branch.equals(readCurrentBranch())) {
             printErrorAndExit("Cannot remove the current branch.");
         }
         // delete the branch only, not the commits
+        File branchFile = join(HEADS_DIR, branch);
         branchFile.delete();
     }
 
@@ -376,7 +366,326 @@ public class Repository {
     }
 
     public static void mergeCommand(String branch) {
+        checkIfStageEmpty();
+        checkIfBranchExists(branch);
+        checkIfMergeWithSelf(branch);
 
+        currentBranch = readCurrentBranch();
+        String currentCommitID = readBranchCommitID(currentBranch);
+        String mergedID = readBranchCommitID(branch);
+        String splitPoint = findSplitPoint(currentCommitID, mergedID);
+        if (splitPoint.equals(mergedID)) {
+            printErrorAndExit("Given branch is an ancestor of the current branch.");
+        } else if (splitPoint.equals(currentCommitID)) {
+            checkoutBranchCommand(branch);
+            printErrorAndExit("Current branch fast-forwarded.");
+        }
+
+        // create a new commit, set current commit and merged commit as parents
+        String message = "Merged" + branch + "into" + currentBranch + ".";
+        currentCommit = readCommitByID(currentCommitID);
+        Map<String, String> currentMap = currentCommit.getMapFileNameToBlobID();
+        List<String> parents = new ArrayList<>(List.of(currentCommitID, mergedID));
+        Commit newCommit = new Commit(message, currentMap, parents);
+        Map<String, String> newMap = newCommit.getMapFileNameToBlobID();
+
+
+        Commit mergedCommit = readCommitByID(mergedID);
+        Map<String, String> mergedMap = mergedCommit.getMapFileNameToBlobID();
+        Commit splitCommit = readCommitByID(splitPoint);
+        Map<String, String> splitMap = splitCommit.getMapFileNameToBlobID();
+
+        /**
+         * find files modified in given branch since split, but unmodified in current
+         * change those files to versions in given branch and add to stage
+         */
+//        List<String> modifiedInMerged = calculateOverwriteFiles(newMap, mergedMap, splitMap);
+//        overwriteFiles(modifiedInMerged, mergedCommit);
+        /**
+         * find files ONLY exist in given branch
+         * checkout these files and add to stage
+         */
+//        List<String> onlyInMerged = calculateWriteFiles(newMap, mergedMap, splitMap);
+//        writeFiles(onlyInMerged, mergedCommit);
+        /**
+         * Any files present at the split point, unmodified in the current branch,
+         * and absent in the given branch should be removed (and untracked).
+         */
+//        List<String> absentInMerged = calculateDeleteFiles(newMap, mergedMap, splitMap);
+//        deleteFiles(absentInMerged);
+
+        Set<String> allFiles = new HashSet<>();
+        collectAllFiles(newCommit, allFiles);
+        collectAllFiles(mergedCommit, allFiles);
+        collectAllFiles(splitCommit, allFiles);
+        List<String> writeList = new ArrayList<>();
+        List<String> overwriteList = new ArrayList<>();
+        List<String> deleteList = new ArrayList<>();
+        dealWithConflicts(allFiles, newMap, mergedMap, splitMap,
+                            writeList, overwriteList, deleteList);
+        writeFiles(writeList, mergedCommit);
+        overwriteFiles(overwriteList, mergedCommit);
+        deleteFiles(deleteList);
+        Commit merge = generateMergeCommit(newCommit, mergedMap, writeList, overwriteList, deleteList);
+        saveNewCommit(merge);
+    }
+
+    private static void saveNewCommit(Commit commit) {
+        commit.save();
+        addStage = readStage(ADDSTAGE_FILE);
+        removeStage = readStage(REMOVESTAGE_FILE);
+        addStage.clear();
+        addStage.saveStage();
+        removeStage.clear();
+        removeStage.saveStage();
+        // change the HEAD pointer
+        currentBranch = readCurrentBranch();
+        File branchHead = join(HEADS_DIR, currentBranch);
+        writeContents(branchHead, commit.getID());
+    }
+
+    private static Commit generateMergeCommit(Commit newCommit,
+                                              Map<String, String> mergedMap,
+                                              List<String> writeList,
+                                              List<String> overwriteList,
+                                              List<String> deleteList) {
+        Map<String, String> mapAfterMerge = newCommit.getMapFileNameToBlobID();
+        for (String fileName : writeList) {
+            String blobID = mergedMap.get(fileName);
+            mapAfterMerge.put(fileName, blobID);
+        }
+        for (String fileName : overwriteList) {
+            String blobID = mergedMap.get(fileName);
+            mapAfterMerge.put(fileName, blobID);
+        }
+        for (String fileName : deleteList) {
+            mapAfterMerge.remove(fileName);
+        }
+        String message = newCommit.getMessage();
+        List<String> parents = newCommit.getParentsID();
+        return new Commit(message, mapAfterMerge, parents);
+    }
+
+    private static void dealWithConflicts(Set<String> allFiles,
+                                          Map<String, String> newMap,
+                                          Map<String, String> mergedMap,
+                                          Map<String, String> splitMap,
+                                          List<String> writeList,
+                                          List<String> overwriteList,
+                                          List<String> deleteList) {
+        boolean isConflict = false;
+        for (String fileName : allFiles) {
+            int countInMaps = 0;
+            if (newMap.containsKey(fileName)) {
+                countInMaps += 1;
+            }
+            if (mergedMap.containsKey(fileName)) {
+                countInMaps += 2;
+            }
+            if (splitMap.containsKey(fileName)) {
+                countInMaps += 4;
+            }
+            switch(countInMaps) {
+                case 1:
+                    // file only in newMap, nothing
+                    break;
+                case 2:
+                    // file only in mergedMap, write
+                    writeList.add(fileName);
+                    break;
+                case 3:
+                    // if added in both branch in different ways, conflict
+                    if (!newMap.get(fileName).equals(mergedMap.get(fileName))) {
+                        writeConflictFile(fileName, newMap, mergedMap);
+                        isConflict = true;
+                    }
+                    break;
+                case 4:
+                    // deleted from both branched, nothing
+                    break;
+                case 5:
+                    // if changed in newMap and deleted in merge, conflict
+                    if (!newMap.get(fileName).equals(splitMap.get(fileName))) {
+                        writeConflictFile(fileName, newMap, mergedMap);
+                        isConflict = true;
+                    } else {
+                        // if unchanged in newMap, but deleted in merge, add to delete
+                        deleteList.add(fileName);
+                    }
+                    break;
+                case 6:
+                    // changed in merge, deleted from new, conflict
+                    if (!mergedMap.get(fileName).equals(splitMap.get(fileName))) {
+                        writeConflictFile(fileName, newMap, mergedMap);
+                        isConflict = true;
+                    }
+                    break;
+                case 7:
+                    if (!newMap.get(fileName).equals(mergedMap.get(fileName))) {
+                        // if in new and merged are same, nothing. So only consider unequal
+                        if (newMap.get(fileName).equals(splitMap.get(fileName))) {
+                            // if changed in merge, add to overwrite
+                            overwriteList.add(fileName);
+                        } else {
+                            // if new changed since split
+                            if (!mergedMap.get(fileName).equals(splitMap.get(fileName))) {
+                                // if merge also changed since split, i.e. nothing equal
+                                writeConflictFile(fileName, newMap, mergedMap);
+                                isConflict = true;
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+        if (isConflict) {
+            System.out.println("Encountered a merge conflict.");
+        }
+    }
+
+    private static void writeConflictFile(String fileName,
+                                          Map<String, String> newMap,
+                                          Map<String, String> mergedmap) {
+        String newContent = getContentFromMap(fileName, newMap);
+        String mergedContent = getContentFromMap(fileName,mergedmap);
+        String contentAfterMerge = "<<<<<<< HEAD\n"
+                                    + newContent
+                                    + "=======\n"
+                                    + mergedContent
+                                    + ">>>>>>>\n";
+        File file = join(CWD, fileName);
+        writeContents(file, contentAfterMerge);
+    }
+
+    private static String getContentFromMap (String fileName, Map<String, String> currMap) {
+        Blob blob;
+        String content;
+        if (currMap.get(fileName).equals(null)) {
+            content = "";
+        } else {
+            blob = readBlobByID(currMap.get(fileName));
+            content = blob.getContent();
+        }
+        return content;
+    }
+
+    private static void collectAllFiles(Commit newCommit, Set<String> allFilesSet) {
+        for (String fileName : newCommit.getFileNames()) {
+            allFilesSet.add(fileName);
+        }
+    }
+
+    private static List<String> calculateOverwriteFiles(Map<String, String> newMap,
+                                                        Map<String, String> mergedMap,
+                                                        Map<String, String> splitMap) {
+        List<String> overwriteFiles = new ArrayList<>();
+        for (String fileName : splitMap.keySet()) {
+            if (newMap.containsKey(fileName) && mergedMap.containsKey(fileName)) {
+                if (splitMap.get(fileName).equals(newMap.get(fileName))
+                        && !splitMap.get(fileName).equals(mergedMap.get(fileName))) {
+                    overwriteFiles.add(fileName);
+                }
+            }
+        }
+        return overwriteFiles;
+    }
+
+    private static List<String> calculateWriteFiles(Map<String, String> newMap,
+                                                    Map<String, String> mergedMap,
+                                                    Map<String, String> splitMap) {
+        List<String> writeFiles = new ArrayList<>();
+        for (String fileName : mergedMap.keySet()) {
+            if (!newMap.containsKey(fileName) && !splitMap.containsKey(fileName)) {
+                writeFiles.add(fileName);
+            }
+        }
+        return writeFiles;
+    }
+
+    private static List<String> calculateDeleteFiles(Map<String, String> newMap,
+                                                     Map<String, String> mergedMap,
+                                                     Map<String, String> splitMap) {
+        List<String> deleteFiles = new ArrayList<>();
+        for (String fileName : splitMap.keySet()) {
+            if (newMap.containsKey(fileName)
+                    && newMap.get(fileName).equals(splitMap.get(fileName))
+                    && !mergedMap.containsKey(fileName)) {
+                deleteFiles.add(fileName);
+            }
+        }
+        return deleteFiles;
+    }
+
+    private static List<String> calculateConflicts(Map<String, String> newMap,
+                                                   Map<String, String> mergedMap,
+                                                   Map<String, String> splitMap) {
+        List<String> conflicts = new ArrayList<>();
+        for (String fileName : splitMap.keySet()) {
+            // tracked by both and modified in different ways
+            if (newMap.containsKey(fileName)
+                    && mergedMap.containsKey(fileName)
+                    && !newMap.get(fileName).equals(mergedMap.get(fileName))) {
+                conflicts.add(fileName);
+            }
+        }
+        return conflicts;
+    }
+
+    private static String findSplitPoint(String id1, String id2) {
+        Set<String> ancestors1 = new HashSet<>();
+        collectAncestors(id1, ancestors1);
+
+        Queue<String> queue = new LinkedList<>();
+        queue.offer(id2);
+
+        while (!queue.isEmpty()) {
+            // get commit at the front of queue
+            String currentID = queue.poll();
+            // found common ancestor
+            if (ancestors1.contains(currentID)) {
+                return currentID;
+            }
+            Commit commit = readCommitByID(currentID);
+            // add parents to queue
+            for (String parentID : commit.getParentsID()) {
+                queue.offer(parentID);
+            }
+        }
+        return null;
+    }
+
+    private static void collectAncestors(String id, Set<String> ancestors) {
+        // add current id into set
+        ancestors.add(id);
+        Commit commit = readCommitByID(id);
+        // recursively add parents id into set
+        for (String parentID : commit.getParentsID()) {
+            collectAncestors(parentID, ancestors);
+        }
+    }
+
+    private static void checkIfStageEmpty () {
+        // if stage is not empty, print error
+        addStage = readStage(ADDSTAGE_FILE);
+        removeStage = readStage(REMOVESTAGE_FILE);
+        if (!addStage.isEmpty() || !removeStage.isEmpty()) {
+            printErrorAndExit("You have uncommitted changes.");
+        }
+    }
+
+    private static void checkIfBranchExists(String branch) {
+        // if branch doesn't exist, print error
+        File branchFile = join(HEADS_DIR, branch);
+        if (!branchFile.exists()) {
+            printErrorAndExit("A branch with that name does not exist.");
+        }
+    }
+
+    private static void checkIfMergeWithSelf(String branch) {
+        currentBranch = readCurrentBranch();
+        if (branch.equals(currentBranch)) {
+            printErrorAndExit("Cannot merge a branch with itself.");
+        }
     }
 
     private static List<String> findOnlyTrackedByFirst(Commit first, Commit second) {
@@ -389,6 +698,22 @@ public class Repository {
         List<String> newList = new ArrayList<>();
         for (String s : firstNames) {
             if (!secondNames.contains(s)) {
+                newList.add(s);
+            }
+        }
+        return newList;
+    }
+
+    private static List<String> findBothTracked(Commit first, Commit second) {
+        List<String> firstNames = first.getFileNames();
+        List<String> secondNames = second.getFileNames();
+        /**
+         * create a new list to save result
+         * if simply remove from one list, result will be wrong
+         */
+        List<String> newList = new ArrayList<>();
+        for (String s : firstNames) {
+            if (secondNames.contains(s)) {
                 newList.add(s);
             }
         }

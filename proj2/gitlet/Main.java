@@ -97,7 +97,6 @@ public class Main {
                 Repository.checkInitialized();
                 Repository.mergeCommand(args[1]);
                 break;
-
             default:
                 Repository.printErrorAndExit("No command with that name exists.");
         }

@@ -6,7 +6,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import static gitlet.Utils.*;
-import static gitlet.Repository.OBJECT_DIR;
+import static gitlet.Repository.*;
 
 
 /** Represents a gitlet commit object.

@@ -51,4 +51,8 @@ public class Stage implements Serializable {
     public void clear() {
         mapFileNameToBlobID.clear();
     }
+
+    public boolean isEmpty() {
+        return mapFileNameToBlobID.size() == 0;
+    }
 }
