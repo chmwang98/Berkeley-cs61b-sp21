@@ -239,7 +239,17 @@ public class Repository {
         List<String> filesToOverwrite = findBothTracked(currentCommit, newCommit);
         overwriteFiles(filesToOverwrite, newCommit);
 
-        saveNewCommit(newCommit);
+        clearStages();
+    }
+
+    private static void clearStages() {
+        // clear stage of add and delete
+        addStage = readStage(ADDSTAGE_FILE);
+        addStage.clear();
+        addStage.saveStage();
+        removeStage = readStage(REMOVESTAGE_FILE);
+        removeStage.clear();
+        removeStage.saveStage();
     }
 
     private static void writeFiles(List<String> filesToWrite, Commit newCommit) {
@@ -263,7 +273,7 @@ public class Repository {
 
     private static void deleteFiles(List<String> filesToDelete) {
         for (String fileName: filesToDelete) {
-            File file = join(CWD,fileName);
+            File file = join(CWD, fileName);
             restrictedDelete(file);
         }
     }
@@ -432,12 +442,7 @@ public class Repository {
 
     private static void saveNewCommit(Commit commit) {
         commit.save();
-        addStage = readStage(ADDSTAGE_FILE);
-        removeStage = readStage(REMOVESTAGE_FILE);
-        addStage.clear();
-        addStage.saveStage();
-        removeStage.clear();
-        removeStage.saveStage();
+        clearStages();
         // change the HEAD pointer
         currentBranch = readCurrentBranch();
         File branchHead = join(HEADS_DIR, currentBranch);
