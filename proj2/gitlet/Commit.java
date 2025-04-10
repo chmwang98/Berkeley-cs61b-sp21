@@ -95,7 +95,10 @@ public class Commit implements Serializable {
         System.out.println("===");
         System.out.println("commit " + id);
         if (isMerged()) {
-            String s = "Merge:" + parents.get(0).substring(0, 7) + parents.get(1).substring(0, 7);
+            String s = "Merge: "
+                        + parents.get(0).substring(0, 7)
+                        + " "
+                        + parents.get(1).substring(0, 7);
             System.out.println(s);
         }
         System.out.println("Date: " + timeStamp);

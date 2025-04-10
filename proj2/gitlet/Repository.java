@@ -392,7 +392,7 @@ public class Repository {
         }
 
         // create a new commit, set current commit and merged commit as parents
-        String message = "Merged" + branch + "into" + currentBranch + ".";
+        String message = "Merged " + branch + " into " + currentBranch + ".";
         currentCommit = readCommitByID(currentCommitID);
         Map<String, String> currentMap = currentCommit.getMapFileNameToBlobID();
         List<String> parents = new ArrayList<>(List.of(currentCommitID, mergedID));
@@ -568,7 +568,7 @@ public class Repository {
     private static String getContentFromMap(String fileName, Map<String, String> currMap) {
         Blob blob;
         String content;
-        if (currMap.get(fileName).equals(null)) {
+        if (!currMap.containsKey(fileName)) {
             content = "";
         } else {
             blob = readBlobByID(currMap.get(fileName));
