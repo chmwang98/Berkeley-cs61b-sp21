@@ -436,7 +436,8 @@ public class Repository {
         writeFiles(writeList, mergedCommit);
         overwriteFiles(overwriteList, mergedCommit);
         deleteFiles(deleteList);
-        Commit merge = generateMergeCommit(newCommit, mergedMap, writeList, overwriteList, deleteList);
+        Commit merge = generateMergeCommit(newCommit, mergedMap,
+                                            writeList, overwriteList, deleteList);
         saveNewCommit(merge);
     }
 
@@ -490,7 +491,7 @@ public class Repository {
             if (splitMap.containsKey(fileName)) {
                 countInMaps += 4;
             }
-            switch(countInMaps) {
+            switch (countInMaps) {
                 case 1:
                     // file only in newMap, nothing
                     break;
@@ -541,6 +542,8 @@ public class Repository {
                         }
                     }
                     break;
+                default:
+                    break;
             }
         }
         if (isConflict) {
@@ -552,7 +555,7 @@ public class Repository {
                                           Map<String, String> newMap,
                                           Map<String, String> mergedmap) {
         String newContent = getContentFromMap(fileName, newMap);
-        String mergedContent = getContentFromMap(fileName,mergedmap);
+        String mergedContent = getContentFromMap(fileName, mergedmap);
         String contentAfterMerge = "<<<<<<< HEAD\n"
                                     + newContent
                                     + "=======\n"
@@ -562,7 +565,7 @@ public class Repository {
         writeContents(file, contentAfterMerge);
     }
 
-    private static String getContentFromMap (String fileName, Map<String, String> currMap) {
+    private static String getContentFromMap(String fileName, Map<String, String> currMap) {
         Blob blob;
         String content;
         if (currMap.get(fileName).equals(null)) {
@@ -669,7 +672,7 @@ public class Repository {
         }
     }
 
-    private static void checkIfStageEmpty () {
+    private static void checkIfStageEmpty() {
         // if stage is not empty, print error
         addStage = readStage(ADDSTAGE_FILE);
         removeStage = readStage(REMOVESTAGE_FILE);
