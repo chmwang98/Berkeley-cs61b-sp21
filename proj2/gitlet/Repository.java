@@ -34,18 +34,15 @@ public class Repository {
     public static final File REMOVESTAGE_FILE = join(GITLET_DIR, "remove_stage");
 
     private static Commit currentCommit;
-    private static Stage addStage = new Stage(ADDSTAGE_FILE);
-    private static Stage removeStage = new Stage(REMOVESTAGE_FILE);
+    private static Stage addStage;
+    private static Stage removeStage;
     private static String currentBranch;
 
     /**
      * Creates a new Gitlet version-control system in the current directory.
-     * Start with one commit that contains no files and has the commit message.
      * It will have a single branch: master, which initially points to this initial commit.
      * The timestamp for this initial commit will be 00:00:00 UTC, Thursday, 1 January 1970.
-     * Initial commit in all repositories created by Gitlet will have the same content,
-     * all repositories will share this commit (they will all have the same UID)
-     * and all commits in all repositories will trace back to it.
+     * Initial commit in all repositories created by Gitlet will have the same content
      * */
     public static void initCommand() {
         if (GITLET_DIR.exists()) {
@@ -70,11 +67,9 @@ public class Repository {
 
     /**
      * Adds a copy of the file as it currently exists to the staging area.
-     * For this reason, adding a file is also called staging the file for addition.
      * Staging already-staged file overwrites in the staging area with new contents.
-     * The staging area should be somewhere in .gitlet.
-     * If current working version of the file is identical to the version in the current commit,
-     * do not currentStage it to be added, and remove it from the staging area
+     * If current version of file is identical to version in current commit,
+     * remove it from the staging area
      * (as can happen when a file is changed, added, and then changed back).
      * The file will no longer be staged for removal (see gitlet rm),
      * if it was at the time of the command.
@@ -166,7 +161,6 @@ public class Repository {
         } else {
             printErrorAndExit("No reason to remove the file.");
         }
-
     }
 
     public static void logCommand() {
@@ -403,25 +397,6 @@ public class Repository {
         Commit splitCommit = readCommitByID(splitPoint);
         Map<String, String> splitMap = splitCommit.getMapFileNameToBlobID();
 
-        /**
-         * find files modified in given branch since split, but unmodified in current
-         * change those files to versions in given branch and add to stage
-         */
-//        List<String> modifiedInMerged = calculateOverwriteFiles(newMap, mergedMap, splitMap);
-//        overwriteFiles(modifiedInMerged, mergedCommit);
-        /**
-         * find files ONLY exist in given branch
-         * checkout these files and add to stage
-         */
-//        List<String> onlyInMerged = calculateWriteFiles(newMap, mergedMap, splitMap);
-//        writeFiles(onlyInMerged, mergedCommit);
-        /**
-         * Any files present at the split point, unmodified in the current branch,
-         * and absent in the given branch should be removed (and untracked).
-         */
-//        List<String> absentInMerged = calculateDeleteFiles(newMap, mergedMap, splitMap);
-//        deleteFiles(absentInMerged);
-
         Set<String> allFiles = new HashSet<>();
         collectAllFiles(newCommit, allFiles);
         collectAllFiles(mergedCommit, allFiles);
@@ -581,62 +556,6 @@ public class Repository {
         }
     }
 
-    private static List<String> calculateOverwriteFiles(Map<String, String> newMap,
-                                                        Map<String, String> mergedMap,
-                                                        Map<String, String> splitMap) {
-        List<String> overwriteFiles = new ArrayList<>();
-        for (String fileName : splitMap.keySet()) {
-            if (newMap.containsKey(fileName) && mergedMap.containsKey(fileName)) {
-                if (splitMap.get(fileName).equals(newMap.get(fileName))
-                        && !splitMap.get(fileName).equals(mergedMap.get(fileName))) {
-                    overwriteFiles.add(fileName);
-                }
-            }
-        }
-        return overwriteFiles;
-    }
-
-    private static List<String> calculateWriteFiles(Map<String, String> newMap,
-                                                    Map<String, String> mergedMap,
-                                                    Map<String, String> splitMap) {
-        List<String> writeFiles = new ArrayList<>();
-        for (String fileName : mergedMap.keySet()) {
-            if (!newMap.containsKey(fileName) && !splitMap.containsKey(fileName)) {
-                writeFiles.add(fileName);
-            }
-        }
-        return writeFiles;
-    }
-
-    private static List<String> calculateDeleteFiles(Map<String, String> newMap,
-                                                     Map<String, String> mergedMap,
-                                                     Map<String, String> splitMap) {
-        List<String> deleteFiles = new ArrayList<>();
-        for (String fileName : splitMap.keySet()) {
-            if (newMap.containsKey(fileName)
-                    && newMap.get(fileName).equals(splitMap.get(fileName))
-                    && !mergedMap.containsKey(fileName)) {
-                deleteFiles.add(fileName);
-            }
-        }
-        return deleteFiles;
-    }
-
-    private static List<String> calculateConflicts(Map<String, String> newMap,
-                                                   Map<String, String> mergedMap,
-                                                   Map<String, String> splitMap) {
-        List<String> conflicts = new ArrayList<>();
-        for (String fileName : splitMap.keySet()) {
-            // tracked by both and modified in different ways
-            if (newMap.containsKey(fileName)
-                    && mergedMap.containsKey(fileName)
-                    && !newMap.get(fileName).equals(mergedMap.get(fileName))) {
-                conflicts.add(fileName);
-            }
-        }
-        return conflicts;
-    }
-
     private static String findSplitPoint(String id1, String id2) {
         Set<String> ancestors1 = new HashSet<>();
         collectAncestors(id1, ancestors1);
@@ -696,15 +615,14 @@ public class Repository {
 
     private static List<String> findOnlyTrackedByFirst(Commit first, Commit second) {
         List<String> firstNames = first.getFileNames();
-        List<String> secondNames = second.getFileNames();
         /**
          * create a new list to save result
          * if simply remove from one list, result will be wrong
          */
         List<String> newList = new ArrayList<>();
-        for (String s : firstNames) {
-            if (!secondNames.contains(s)) {
-                newList.add(s);
+        for (String fileName : firstNames) {
+            if (!second.isFileNameInCommit(fileName)) {
+                newList.add(fileName);
             }
         }
         return newList;
@@ -712,15 +630,14 @@ public class Repository {
 
     private static List<String> findBothTracked(Commit first, Commit second) {
         List<String> firstNames = first.getFileNames();
-        List<String> secondNames = second.getFileNames();
         /**
          * create a new list to save result
          * if simply remove from one list, result will be wrong
          */
         List<String> newList = new ArrayList<>();
-        for (String s : firstNames) {
-            if (secondNames.contains(s)) {
-                newList.add(s);
+        for (String fileName : firstNames) {
+            if (second.isFileNameInCommit(fileName)) {
+                newList.add(fileName);
             }
         }
         return newList;
@@ -751,15 +668,14 @@ public class Repository {
 
     private static Commit readBranchCommit(String branch) {
         String commitID = readBranchCommitID(branch);
-        File commitFile = join(COMMIT_DIR, commitID);
-        return readObject(commitFile, Commit.class);
+        return readCommitByID(commitID);
     }
 
     private static String readBranchCommitID(String branch) {
         return readContentsAsString(join(HEADS_DIR, branch));
     }
 
-    // the current branch is saved in HEAD, e.g. 'refs/heads/master'
+    // the current branch is saved in HEAD, e.g. 'master'
     private static String readCurrentBranch() {
         return readContentsAsString(HEAD_FILE);
     }

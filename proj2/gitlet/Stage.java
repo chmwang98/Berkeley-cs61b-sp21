@@ -28,10 +28,6 @@ public class Stage implements Serializable {
         mapFileNameToBlobID.remove(fileName);
     }
 
-    public void removeBlobFromStage(Blob blob) {
-        mapFileNameToBlobID.remove(blob.getFileName());
-    }
-
     public void saveStage() {
         writeObject(STAGE_FILE, this);
     }

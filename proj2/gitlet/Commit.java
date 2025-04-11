@@ -117,15 +117,7 @@ public class Commit implements Serializable {
         }
         return fileNames;
     }
-
-    public List<String> getBlobIDs() {
-        List<String> blobIDs = new ArrayList<>();
-        for (String blobID : mapFileNameToBlobID.values()) {
-            blobIDs.add(blobID);
-        }
-        return blobIDs;
-    }
-
+    
     public String getMessage() {
         return message;
     }
