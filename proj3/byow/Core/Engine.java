@@ -2,12 +2,18 @@ package byow.Core;
 
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
+import byow.TileEngine.Tileset;
+
+import java.sql.Array;
+import java.util.ArrayList;
 
 public class Engine {
     TERenderer ter = new TERenderer();
     /* Feel free to change the width and height. */
     public static final int WIDTH = 80;
     public static final int HEIGHT = 30;
+    public TETile[][] tiles;
+    public long SEED;
 
     /**
      * Method used for exploring a fresh world. This method should handle all inputs,
@@ -46,7 +52,27 @@ public class Engine {
         // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
         // that works for many different input types.
 
-        TETile[][] finalWorldFrame = null;
+        TETile[][] finalWorldFrame = new TETile[WIDTH][HEIGHT];
+
+        ter.initialize(WIDTH, HEIGHT);
+
+        fillWithNothing(finalWorldFrame);
+        SEED = 123456;
+        RoomGenerator rg = new RoomGenerator(WIDTH, HEIGHT, SEED, finalWorldFrame);
+        rg.generateRooms();
+        rg.connectRooms();
+
+        ter.renderFrame(finalWorldFrame);
         return finalWorldFrame;
+    }
+
+
+    // Fills tiles of this world with NOTHING.
+    private void fillWithNothing(TETile[][] finalWorldFrame) {
+        for (int x = 0; x < WIDTH; x += 1) {
+            for (int y = 0; y < HEIGHT; y += 1) {
+                finalWorldFrame[x][y] = Tileset.NOTHING;
+            }
+        }
     }
 }
