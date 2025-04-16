@@ -62,4 +62,21 @@ public class RoomGenerator {
         }
     }
 
+    public void drawWalls() {
+        int[][] offsets = {{-1, 0}, {-1, 1}, {0, 1}, {1, 1},
+                            {1, 0}, {1, -1}, {0, -1}, {-1, -1}};
+        for (int x = 0; x < worldWidth; x++) {
+            for (int y = 0; y < worldHeight; y++) {
+                if (tiles[x][y].equals(Tileset.FLOOR)) {
+                    for (int[] o : offsets) {
+                        int nx = x + o[0];
+                        int ny = y + o[1];
+                        if (tiles[nx][ny].equals(Tileset.NOTHING)) {
+                            tiles[nx][ny] = Tileset.WALL;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

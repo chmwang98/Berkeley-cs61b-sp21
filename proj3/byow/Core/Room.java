@@ -34,8 +34,8 @@ public class Room {
 
     // check if room overlaps with another room
     public boolean isOverlapping(Room room) {
-        return !(p.x + width < room.p.x || room.p.x + room.width < p.x ||
-                p.y + height < room.p.y || room.p.y + room.height < p.y);
+        return !(p.x + width + 1 < room.p.x || room.p.x + room.width + 1 < p.x ||
+                p.y + height + 1 < room.p.y || room.p.y + room.height + 1 < p.y);
     }
 
     // check if room overlaps with any room from a list
