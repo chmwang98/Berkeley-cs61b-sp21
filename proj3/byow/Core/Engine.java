@@ -54,17 +54,13 @@ public class Engine {
 
         TETile[][] finalWorldFrame = new TETile[WIDTH][HEIGHT];
 
-        ter.initialize(WIDTH, HEIGHT);
-
         fillWithNothing(finalWorldFrame);
         SEED = processInputString(input);
         RoomGenerator rg = new RoomGenerator(WIDTH, HEIGHT, SEED, finalWorldFrame);
         rg.generateRooms();
-        ter.renderFrame(finalWorldFrame);
         rg.connectRooms();
         rg.drawWalls();
 
-        ter.renderFrame(finalWorldFrame);
         return finalWorldFrame;
     }
 
