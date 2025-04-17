@@ -144,7 +144,7 @@ public class Engine {
                 startGame();
                 break;
             case 'Q':
-                System.exit(0);
+//                System.exit(0);
                 break;
             default:
                 drawFrame("Invalid mode: " + key + ", bye!");
@@ -198,7 +198,7 @@ public class Engine {
         } catch (IOException o){
             o.printStackTrace();
         }
-        System.exit(0);
+//        System.exit(0);
     }
 
     private long getSeedFromKeyboard() {
