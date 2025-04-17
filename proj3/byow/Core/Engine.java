@@ -92,7 +92,7 @@ public class Engine {
         char mode = input.charAt(0);
         if (mode == 'N') {
             result.isNewGame = true;
-            Pattern p = Pattern.compile("N(\\d+)S([A-Z])");
+            Pattern p = Pattern.compile("N(\\d+)S([A-Z]*)");
             Matcher m = p.matcher(input);
             if (m.matches()) {
                 result.SEED = Long.parseLong(m.group(1));
