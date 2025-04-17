@@ -3,11 +3,12 @@ package byow.Core;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class RoomGenerator {
+public class RoomGenerator implements Serializable {
     public int worldWidth, worldHeight;
     public int maxRooms;
     public Random random;
@@ -21,6 +22,12 @@ public class RoomGenerator {
         this.maxRooms = RandomUtils.uniform(random, 15, 25);
         this.tiles = tiles;
         this.rooms = new ArrayList<>();
+    }
+
+    public void drawRoomsWithWalls() {
+        generateRooms();
+        connectRooms();
+        drawWalls();
     }
 
     public void generateRooms() {

@@ -2,9 +2,11 @@ package byow.Core;
 
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
+
+import java.io.Serializable;
 import java.util.List;
 
-public class Room {
+public class Room implements Serializable {
     public Position p;    // coordinate of bottom left point in room
     public int width, height;
     public TETile[][] tiles;
@@ -16,7 +18,7 @@ public class Room {
         this.tiles = tiles;
     }
 
-    // check if the room is within the world bounds
+    // check if the room is within the tiles bounds
     public boolean isValid() {
         int worldWidth = tiles.length;
         int worldHeight = tiles[0].length;

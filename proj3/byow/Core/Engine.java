@@ -2,24 +2,28 @@ package byow.Core;
 
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
-import byow.TileEngine.Tileset;
+import edu.princeton.cs.introcs.StdDraw;
+import net.sf.saxon.trans.SymbolicName;
 
-import java.sql.Array;
-import java.util.ArrayList;
+import java.awt.*;
+import java.io.*;
+import java.sql.Wrapper;
 
 public class Engine {
     TERenderer ter = new TERenderer();
     /* Feel free to change the width and height. */
     public static final int WIDTH = 80;
-    public static final int HEIGHT = 30;
-    public TETile[][] tiles;
-    public long SEED;
+    public static final int HEIGHT = 40;
+    public World world;
+    private long SEED;
 
     /**
-     * Method used for exploring a fresh world. This method should handle all inputs,
+     * Method used for exploring a fresh tiles. This method should handle all inputs,
      * including inputs from the main menu.
      */
     public void interactWithKeyboard() {
+        displayMainMenu();
+        selectMode(getInputFromKeyboard());
     }
 
     /**
@@ -52,30 +56,153 @@ public class Engine {
         // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
         // that works for many different input types.
 
-        TETile[][] finalWorldFrame = new TETile[WIDTH][HEIGHT];
+        startNewGame();
 
-        fillWithNothing(finalWorldFrame);
-        SEED = processInputString(input);
-        RoomGenerator rg = new RoomGenerator(WIDTH, HEIGHT, SEED, finalWorldFrame);
-        rg.generateRooms();
-        rg.connectRooms();
-        rg.drawWalls();
-
-        return finalWorldFrame;
-    }
-
-
-    // Fills tiles of this world with NOTHING.
-    private void fillWithNothing(TETile[][] finalWorldFrame) {
-        for (int x = 0; x < WIDTH; x += 1) {
-            for (int y = 0; y < HEIGHT; y += 1) {
-                finalWorldFrame[x][y] = Tileset.NOTHING;
-            }
-        }
+        return world.getTiles();
     }
 
     private long processInputString(String input) {
         String number = input.substring(1, input.length() - 1);
         return Long.parseLong(number);
     }
+
+    private void displayMainMenu() {
+        StdDraw.setCanvasSize(WIDTH * 16, HEIGHT * 16);
+        StdDraw.setXscale(0, WIDTH);
+        StdDraw.setYscale(0, HEIGHT);
+        StdDraw.setPenColor(Color.WHITE);
+        StdDraw.clear(Color.BLACK);
+        StdDraw.enableDoubleBuffering();
+
+        Font font = new Font("Monaco", Font.BOLD, 40);
+        StdDraw.setFont(font);
+        StdDraw.text(WIDTH / 2, HEIGHT / 2 + 10, "CS61B: THE GAME");
+        font = new Font("Monaco", Font.PLAIN, 20);
+        StdDraw.setFont(font);
+        StdDraw.text(WIDTH / 2, HEIGHT / 2 + 2, "New Game (N)");
+        StdDraw.text(WIDTH / 2, HEIGHT / 2, "Load Game (L)");
+        StdDraw.text(WIDTH / 2, HEIGHT / 2 - 2, "Quit (Q)");
+        StdDraw.show();
+    }
+
+    private char getInputFromKeyboard() {
+        while (true) {
+            if (StdDraw.hasNextKeyTyped()) {
+                // get input key and change into lowercase
+                return Character.toUpperCase(StdDraw.nextKeyTyped());
+            }
+        }
+    }
+
+    private void selectMode(char key) {
+        switch (key) {
+            case 'N':
+                startNewGame();
+                break;
+            case 'L':
+                loadGame();
+                break;
+            case 'Q':
+                break;
+            default:
+                drawFrame("Invalid mode: " + key + ", bye!");
+                StdDraw.pause(2000);
+                break;
+        }
+    }
+
+    private void startNewGame() {
+        SEED = getSeedFromKeyboard();
+        world = new World(SEED);
+        world.putPlayer();
+        startGame();
+    }
+
+    private void loadGame() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("savedgame.txt"))) {
+            // use the old seed to restore world
+            SEED = Long.parseLong(reader.readLine());
+            world = new World(SEED);
+            // get the position of avatar and put in world
+            String[] positionParts = reader.readLine().split(" ");
+            int x = Integer.parseInt(positionParts[0]);
+            int y = Integer.parseInt(positionParts[1]);
+            world.putPlayer(x, y);
+        } catch (IOException o) {
+            o.printStackTrace();
+        }
+        // after loading, start game
+        startGame();
+    }
+
+    private void startGame() {
+        ter = new TERenderer();
+        ter.initialize(WIDTH, HEIGHT);
+        ter.renderFrame(world.getTiles());
+        moveAvatar();
+    }
+
+    private void saveAndQuit() {
+        try (FileWriter writer = new FileWriter("savedgame.txt")){
+            writer.write(SEED + "\n");
+            writer.write(world.getPlayerPosition().toString());
+        } catch (IOException o){
+            o.printStackTrace();
+        }
+        System.exit(0);
+    }
+
+    private long getSeedFromKeyboard() {
+        String s = new String();
+        char ch;
+        drawFrame("Please type the seed, end with s");
+        while (true) {
+            ch = getInputFromKeyboard();
+            if (ch == 'S') {
+                return Long.parseLong(s);
+            }
+            s += ch;
+            drawFrame("Seed: " + s);
+        }
+    }
+
+    public void drawFrame(String s) {
+        // Take the string and display it in the center of the screen
+        StdDraw.clear(Color.BLACK);
+        Font font = new Font("Monaco", Font.BOLD, 30);
+        StdDraw.setFont(font);
+        StdDraw.setPenColor(Color.WHITE);
+
+        StdDraw.text(WIDTH / 2, HEIGHT / 2, s);
+        StdDraw.show();
+    }
+
+    public void moveAvatar() {
+        while (true) {
+            switch (getInputFromKeyboard()) {
+                case 'W':
+                    world.movePlayer(0, 1);
+                    break;
+                case 'A':
+                    world.movePlayer(-1, 0);
+                    break;
+                case 'S':
+                    world.movePlayer(0, -1);
+                    break;
+                case 'D':
+                    world.movePlayer(1, 0);
+                    break;
+                case ':':
+                    if (getInputFromKeyboard() == 'Q') {
+                        saveAndQuit();
+                    }
+                    break;
+                default:
+                    break;
+            }
+            ter.renderFrame(world.getTiles());
+        }
+    }
+
+
 }
