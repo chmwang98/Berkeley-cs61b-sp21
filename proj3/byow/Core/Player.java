@@ -7,9 +7,9 @@ import java.io.Serializable;
 import java.util.Random;
 
 public class Player implements Serializable {
-    public Random random;
-    public Position p;
-    TETile[][] tiles;
+    private Random random;
+    private Position p;
+    private TETile[][] tiles;
 
     public Player(long seed, TETile[][] world) {
         random = new Random(seed);
@@ -34,15 +34,19 @@ public class Player implements Serializable {
     }
 
     public void move(int dx, int dy) {
-        if (isFloor(p.x + dx, p.y + dy)) {
-            tiles[p.x][p.y] = Tileset.FLOOR;
-            p.x += dx;
-            p.y += dy;
-            tiles[p.x][p.y] = Tileset.AVATAR;
+        if (isFloor(p.getX() + dx, p.getY() + dy)) {
+            tiles[p.getX()][p.getY()] = Tileset.FLOOR;
+            p.setX(p.getX() + dx);
+            p.setY(p.getY() + dy);
+            tiles[p.getX()][p.getY()] = Tileset.AVATAR;
         }
     }
 
     public boolean isFloor(int x, int y) {
         return tiles[x][y].equals(Tileset.FLOOR);
+    }
+
+    public Position getPosition() {
+        return this.p;
     }
 }

@@ -7,9 +7,9 @@ import java.io.Serializable;
 import java.util.List;
 
 public class Room implements Serializable {
-    public Position p;    // coordinate of bottom left point in room
-    public int width, height;
-    public TETile[][] tiles;
+    private Position p;    // coordinate of bottom left point in room
+    private int width, height;
+    private TETile[][] tiles;
 
     public Room(Position p, int width, int height, TETile[][] tiles) {
         this.p = p;
@@ -22,13 +22,13 @@ public class Room implements Serializable {
     public boolean isValid() {
         int worldWidth = tiles.length;
         int worldHeight = tiles[0].length;
-        return (p.x + width < worldWidth) && (p.y + height < worldHeight);
+        return (p.getX() + width < worldWidth) && (p.getY() + height < worldHeight);
     }
 
     // draw the floor of the room
     public void drawRoom() {
-        for (int x = p.x; x < p.x + width; x++) {
-            for(int y = p.y; y < p.y + height; y++) {
+        for (int x = p.getX(); x < p.getX() + width; x++) {
+            for (int y = p.getY(); y < p.getY() + height; y++) {
                 tiles[x][y] = Tileset.FLOOR;
             }
         }
@@ -36,8 +36,10 @@ public class Room implements Serializable {
 
     // check if room overlaps with another room
     public boolean isOverlapping(Room room) {
-        return !(p.x + width + 1 < room.p.x || room.p.x + room.width + 1 < p.x ||
-                p.y + height + 1 < room.p.y || room.p.y + room.height + 1 < p.y);
+        return !(p.getX() + width + 1 < room.p.getX()
+                || room.p.getX() + room.width + 1 < p.getX()
+                || p.getY() + height + 1 < room.p.getY()
+                || room.p.getY() + room.height + 1 < p.getY());
     }
 
     // check if room overlaps with any room from a list
@@ -51,8 +53,8 @@ public class Room implements Serializable {
     }
 
     public Position getCenter() {
-        int xCenter = p.x + width / 2;
-        int yCenter = p.y + height / 2;
+        int xCenter = p.getX() + width / 2;
+        int yCenter = p.getY() + height / 2;
         return new Position(xCenter, yCenter);
     }
 }

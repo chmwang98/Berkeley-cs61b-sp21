@@ -1,11 +1,7 @@
 package byow.Core;
 
-import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
-import edu.princeton.cs.introcs.StdDraw;
-
-import java.awt.*;
 import java.io.Serializable;
 
 public class World implements Serializable {
@@ -52,7 +48,7 @@ public class World implements Serializable {
     }
 
     public Position getPlayerPosition() {
-        return player.p;
+        return player.getPosition();
     }
 }
 

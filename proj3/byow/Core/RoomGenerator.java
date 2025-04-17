@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Random;
 
 public class RoomGenerator implements Serializable {
-    public int worldWidth, worldHeight;
-    public int maxRooms;
-    public Random random;
-    public TETile[][] tiles;
-    public List<Room> rooms;
+    private int worldWidth, worldHeight;
+    private int maxRooms;
+    private Random random;
+    private TETile[][] tiles;
+    private List<Room> rooms;
 
     public RoomGenerator(int width, int height, long seed, TETile[][] tiles) {
         this.worldWidth = width;
@@ -52,8 +52,8 @@ public class RoomGenerator implements Serializable {
         for (int i = 1; i < rooms.size(); i++) {
             Position center1 = rooms.get(i - 1).getCenter();
             Position center2 = rooms.get(i).getCenter();
-            drawHorizontal(center1.x, center2.x, center1.y);
-            drawVertical(center1.y, center2.y, center2.x);
+            drawHorizontal(center1.getX(), center2.getX(), center1.getY());
+            drawVertical(center1.getY(), center2.getY(), center2.getX());
         }
     }
 

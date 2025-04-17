@@ -13,7 +13,7 @@ public class Engine {
     /* Feel free to change the width and height. */
     public static final int WIDTH = 80;
     public static final int HEIGHT = 40;
-    public World world;
+    private World world;
     private long SEED;
 
     /**
@@ -105,6 +105,14 @@ public class Engine {
         return result;
     }
 
+    public class InputParserResult {
+        private boolean isNewGame = false;
+        private boolean isLoad = false;
+        private long SEED = 0;
+        private String commands = "";
+        private boolean saveAndQuit = false;
+    }
+
     private void displayMainMenu() {
         StdDraw.setCanvasSize(WIDTH * 16, HEIGHT * 16);
         StdDraw.setXscale(0, WIDTH);
@@ -183,6 +191,7 @@ public class Engine {
             if (command == ':') {
                 if (getInputFromKeyboard() == 'Q') {
                     saveAndQuit();
+                    return;
                 }
             } else {
                 moveAvatar(command);
@@ -192,10 +201,10 @@ public class Engine {
     }
 
     private void saveAndQuit() {
-        try (FileWriter writer = new FileWriter("savedgame.txt")){
+        try (FileWriter writer = new FileWriter("savedgame.txt")) {
             writer.write(SEED + "\n");
             writer.write(world.getPlayerPosition().toString());
-        } catch (IOException o){
+        } catch (IOException o) {
             o.printStackTrace();
         }
 //        System.exit(0);
