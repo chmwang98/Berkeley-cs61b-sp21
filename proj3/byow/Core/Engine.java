@@ -3,11 +3,10 @@ package byow.Core;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import edu.princeton.cs.introcs.StdDraw;
-import net.sf.saxon.trans.SymbolicName;
-
 import java.awt.*;
 import java.io.*;
-import java.sql.Wrapper;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Engine {
     TERenderer ter = new TERenderer();
@@ -56,14 +55,54 @@ public class Engine {
         // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
         // that works for many different input types.
 
-        startNewGame();
+        InputParserResult parsed = parseInput(input);
+        this.SEED = parsed.SEED;
+
+        if (parsed.isNewGame) {
+            world = new World(SEED);
+            world.putPlayer();
+        } else if (parsed.isLoad) {
+            load();
+        }
+
+        // execute commands
+        for (char command : parsed.commands.toCharArray()) {
+            moveAvatar(command);
+        }
+
+        // save and quit
+        if (parsed.saveAndQuit) {
+            saveAndQuit();
+        }
 
         return world.getTiles();
     }
 
-    private long processInputString(String input) {
-        String number = input.substring(1, input.length() - 1);
-        return Long.parseLong(number);
+    private InputParserResult parseInput(String input) {
+        InputParserResult result = new InputParserResult();
+        // change all letters to upper case
+        input = input.toUpperCase();
+
+        // if end with :Q, save game and quit after commands
+        if (input.endsWith(":Q")) {
+            result.saveAndQuit = true;
+            input = input.substring(0, input.length() - 2);
+        }
+
+        char mode = input.charAt(0);
+        if (mode == 'N') {
+            result.isNewGame = true;
+            Pattern p = Pattern.compile("N(\\d+)S([A-Z])");
+            Matcher m = p.matcher(input);
+            if (m.matches()) {
+                result.SEED = Long.parseLong(m.group(1));
+                result.commands = m.group(2);
+            }
+        } else if (mode == 'L') {
+            result.isLoad = true;
+            result.commands = input.substring(1);
+        }
+        return result;
     }
 
     private void displayMainMenu() {
@@ -97,12 +136,15 @@ public class Engine {
     private void selectMode(char key) {
         switch (key) {
             case 'N':
-                startNewGame();
+                newGame();
+                startGame();
                 break;
             case 'L':
-                loadGame();
+                load();
+                startGame();
                 break;
             case 'Q':
+                System.exit(0);
                 break;
             default:
                 drawFrame("Invalid mode: " + key + ", bye!");
@@ -111,14 +153,13 @@ public class Engine {
         }
     }
 
-    private void startNewGame() {
+    private void newGame() {
         SEED = getSeedFromKeyboard();
         world = new World(SEED);
         world.putPlayer();
-        startGame();
     }
 
-    private void loadGame() {
+    private void load() {
         try (BufferedReader reader = new BufferedReader(new FileReader("savedgame.txt"))) {
             // use the old seed to restore world
             SEED = Long.parseLong(reader.readLine());
@@ -131,15 +172,23 @@ public class Engine {
         } catch (IOException o) {
             o.printStackTrace();
         }
-        // after loading, start game
-        startGame();
     }
 
     private void startGame() {
         ter = new TERenderer();
         ter.initialize(WIDTH, HEIGHT);
         ter.renderFrame(world.getTiles());
-        moveAvatar();
+        while (true) {
+            char command = getInputFromKeyboard();
+            if (command == ':') {
+                if (getInputFromKeyboard() == 'Q') {
+                    saveAndQuit();
+                }
+            } else {
+                moveAvatar(command);
+            }
+            ter.renderFrame(world.getTiles());
+        }
     }
 
     private void saveAndQuit() {
@@ -177,32 +226,22 @@ public class Engine {
         StdDraw.show();
     }
 
-    public void moveAvatar() {
-        while (true) {
-            switch (getInputFromKeyboard()) {
-                case 'W':
-                    world.movePlayer(0, 1);
-                    break;
-                case 'A':
-                    world.movePlayer(-1, 0);
-                    break;
-                case 'S':
-                    world.movePlayer(0, -1);
-                    break;
-                case 'D':
-                    world.movePlayer(1, 0);
-                    break;
-                case ':':
-                    if (getInputFromKeyboard() == 'Q') {
-                        saveAndQuit();
-                    }
-                    break;
-                default:
-                    break;
-            }
-            ter.renderFrame(world.getTiles());
+    public void moveAvatar(char command) {
+        switch (command) {
+            case 'W':
+                world.movePlayer(0, 1);
+                break;
+            case 'A':
+                world.movePlayer(-1, 0);
+                break;
+            case 'S':
+                world.movePlayer(0, -1);
+                break;
+            case 'D':
+                world.movePlayer(1, 0);
+                break;
+            default:
+                break;
         }
     }
-
-
 }
