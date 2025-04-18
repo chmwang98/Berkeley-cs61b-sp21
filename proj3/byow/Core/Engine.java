@@ -29,6 +29,7 @@ public class Engine {
                 running = handleMenuInput(mode);
             }
         }
+        System.exit(0);
     }
 
     /**
@@ -149,7 +150,6 @@ public class Engine {
                 startGame();
                 break;
             case 'Q':
-//                System.exit(0);
                 break;
             default:
                 drawFrame("Invalid mode: " + key + ", bye!");
@@ -211,7 +211,6 @@ public class Engine {
         } catch (IOException o) {
             o.printStackTrace();
         }
-//        System.exit(0);
     }
 
     private void displayHoverInfo() {

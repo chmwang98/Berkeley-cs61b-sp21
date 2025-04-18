@@ -19,7 +19,7 @@ public class RoomGenerator implements Serializable {
         this.worldWidth = width;
         this.worldHeight = height;
         this.random = new Random(seed);
-        this.maxRooms = RandomUtils.uniform(random, 15, 25);
+        this.maxRooms = RandomUtils.uniform(random, 25, 40);
         this.tiles = tiles;
         this.rooms = new ArrayList<>();
     }
@@ -31,9 +31,12 @@ public class RoomGenerator implements Serializable {
     }
 
     public void generateRooms() {
-        for (int i = 0; i < maxRooms; i++) {
-            int roomWidth = RandomUtils.uniform(random, 2, 6);
-            int roomHeight = RandomUtils.uniform(random, 2, 6);
+        int attempts = 0;
+        int maxAttempts = maxRooms * 5;
+        while (rooms.size() < maxRooms && attempts < maxAttempts) {
+            attempts++;
+            int roomWidth = RandomUtils.uniform(random, 3, 8);
+            int roomHeight = RandomUtils.uniform(random, 3, 8);
             int x = RandomUtils.uniform(random, 1, worldWidth - roomWidth - 1);
             int y = RandomUtils.uniform(random, 1, worldHeight - roomHeight - 1);
             Position p = new Position(x, y);
@@ -49,11 +52,54 @@ public class RoomGenerator implements Serializable {
 
     // generate hallways between different rooms
     public void connectRooms() {
-        for (int i = 1; i < rooms.size(); i++) {
-            Position center1 = rooms.get(i - 1).getCenter();
-            Position center2 = rooms.get(i).getCenter();
-            drawHorizontal(center1.getX(), center2.getX(), center1.getY());
-            drawVertical(center1.getY(), center2.getY(), center2.getX());
+        int n = rooms.size();
+        boolean[] isConnected = new boolean[n];
+        isConnected[0] = true;
+
+        // Use Prim's algorithm to connect rooms
+        for (int i = 1; i < n; i++) {
+            int minDist = Integer.MAX_VALUE;
+            int fromIndex = -1;
+            int toIndex = -1;
+
+            for (int j = 0; j < n; j++) {
+                if (isConnected[j]) {
+                    for (int k = 0; k < n; k++) {
+                        if (!isConnected[k]) {
+                            int dist = manhattanDistance(rooms.get(j), rooms.get(k));
+                            if (dist < minDist) {
+                                minDist = dist;
+                                fromIndex = j;
+                                toIndex = k;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (fromIndex != -1 && toIndex != -1) {
+                connect(rooms.get(fromIndex), rooms.get(toIndex));
+                isConnected[toIndex] = true;
+            }
+        }
+    }
+
+    private int manhattanDistance(Room r1, Room r2) {
+        Position c1 = r1.getCenter();
+        Position c2 = r2.getCenter();
+        return Math.abs(c1.getX() - c2.getX()) + Math.abs(c1.getY() - c2.getY());
+    }
+
+    private void connect(Room r1, Room r2) {
+        Position c1 = r1.getCenter();
+        Position c2 = r2.getCenter();
+
+        if (random.nextBoolean()) {
+            drawHorizontal(c1.getX(), c2.getX(), c1.getY());
+            drawVertical(c1.getY(), c2.getY(), c2.getX());
+        } else {
+            drawVertical(c1.getY(), c2.getY(), c1.getX());
+            drawHorizontal(c1.getX(), c2.getX(), c2.getY());
         }
     }
 
