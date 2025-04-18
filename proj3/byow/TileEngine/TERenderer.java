@@ -98,4 +98,32 @@ public class TERenderer {
         }
         StdDraw.show();
     }
+
+    public void renderFrame(TETile[][] world, int avatarX, int avatarY, boolean isGlobalVision) {
+        int numXTiles = world.length;
+        int numYTiles = world[0].length;
+        int visionRange = 5;
+        StdDraw.clear(new Color(0, 0, 0));
+        for (int x = 0; x < numXTiles; x += 1) {
+            for (int y = 0; y < numYTiles; y += 1) {
+                if (world[x][y] == null) {
+                    throw new IllegalArgumentException("Tile at position x=" + x + ", y=" + y
+                            + " is null.");
+                }
+
+                if (isInsight(x, y, avatarX, avatarY, visionRange) || isGlobalVision) {
+                    world[x][y].draw(x + xOffset, y + yOffset);
+                } else {
+                    Tileset.NOTHING.draw(x + xOffset, y + yOffset);
+                }
+            }
+        }
+        StdDraw.show();
+    }
+
+    private boolean isInsight(int x, int y, int avatarX, int avatarY, int visionRange) {
+        int dx = x - avatarX;
+        int dy = y - avatarY;
+        return dx * dx + dy * dy <= visionRange * visionRange;
+    }
 }

@@ -15,6 +15,7 @@ public class Engine {
     public static final int HEIGHT = 40;
     private World world;
     private long SEED;
+    private boolean isGlobalVision;
 
     /**
      * Method used for exploring a fresh tiles. This method should handle all inputs,
@@ -74,7 +75,7 @@ public class Engine {
 
         // execute commands
         for (char command : parsed.commands.toCharArray()) {
-            moveAvatar(command);
+            processCommand(command);
         }
 
         // save and quit
@@ -184,8 +185,12 @@ public class Engine {
         ter = new TERenderer();
         ter.initialize(WIDTH, HEIGHT);
         char commandBuffer = '\0';  // for dealing with ":Q"
+        isGlobalVision = true;
         while (true) {
-            ter.renderFrame(world.getTiles());
+            Position avatarPosition = world.getPlayerPosition();
+            int avatarX = avatarPosition.getX();
+            int avatarY = avatarPosition.getY();
+            ter.renderFrame(world.getTiles(), avatarX, avatarY, isGlobalVision);
             displayHoverInfo();
 
             if (StdDraw.hasNextKeyTyped()) {
@@ -197,7 +202,7 @@ public class Engine {
                 } else if (command == ':') {
                     commandBuffer = command;    // waiting for Q
                 } else {
-                    moveAvatar(command);
+                    processCommand(command);
                     commandBuffer = '\0';   // clear buffer
                 }
             }
@@ -251,7 +256,7 @@ public class Engine {
         StdDraw.show();
     }
 
-    public void moveAvatar(char command) {
+    public void processCommand(char command) {
         switch (command) {
             case 'W':
                 world.movePlayer(0, 1);
@@ -265,6 +270,8 @@ public class Engine {
             case 'D':
                 world.movePlayer(1, 0);
                 break;
+            case 'G':
+                isGlobalVision = !isGlobalVision;
             default:
                 break;
         }
