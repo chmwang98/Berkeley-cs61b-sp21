@@ -70,8 +70,10 @@ public class RoomGenerator implements Serializable {
     }
 
     public void drawWalls() {
-        int[][] offsets = {{-1, 0}, {-1, 1}, {0, 1}, {1, 1},
-                            {1, 0}, {1, -1}, {0, -1}, {-1, -1}};
+        int[][] offsets = {
+                {-1, 0}, {-1, 1}, {0, 1}, {1, 1},
+                {1, 0}, {1, -1}, {0, -1}, {-1, -1}
+        };
         for (int x = 0; x < worldWidth; x++) {
             for (int y = 0; y < worldHeight; y++) {
                 if (tiles[x][y].equals(Tileset.FLOOR)) {
