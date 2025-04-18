@@ -47,6 +47,10 @@ public class World implements Serializable {
         return tiles;
     }
 
+    public TETile getTile(int x, int y) {
+        return tiles[x][y];
+    }
+
     public Position getPlayerPosition() {
         return player.getPosition();
     }

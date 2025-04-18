@@ -22,7 +22,13 @@ public class Engine {
      */
     public void interactWithKeyboard() {
         displayMainMenu();
-        selectMode(getInputFromKeyboard());
+        boolean running = true;
+        while (running) {
+            if (StdDraw.hasNextKeyTyped()) {
+                char mode = Character.toUpperCase(StdDraw.nextKeyTyped());
+                running = handleMenuInput(mode);
+            }
+        }
     }
 
     /**
@@ -132,16 +138,7 @@ public class Engine {
         StdDraw.show();
     }
 
-    private char getInputFromKeyboard() {
-        while (true) {
-            if (StdDraw.hasNextKeyTyped()) {
-                // get input key and change into lowercase
-                return Character.toUpperCase(StdDraw.nextKeyTyped());
-            }
-        }
-    }
-
-    private void selectMode(char key) {
+    private boolean handleMenuInput(char key) {
         switch (key) {
             case 'N':
                 newGame();
@@ -159,6 +156,7 @@ public class Engine {
                 StdDraw.pause(2000);
                 break;
         }
+        return false;
     }
 
     private void newGame() {
@@ -185,18 +183,24 @@ public class Engine {
     private void startGame() {
         ter = new TERenderer();
         ter.initialize(WIDTH, HEIGHT);
-        ter.renderFrame(world.getTiles());
+        char commandBuffer = '\0';  // for dealing with ":Q"
         while (true) {
-            char command = getInputFromKeyboard();
-            if (command == ':') {
-                if (getInputFromKeyboard() == 'Q') {
+            ter.renderFrame(world.getTiles());
+            displayHoverInfo();
+
+            if (StdDraw.hasNextKeyTyped()) {
+                char command = Character.toUpperCase(StdDraw.nextKeyTyped());
+
+                if (commandBuffer == ':' && command == 'Q') {
                     saveAndQuit();
                     return;
+                } else if (command == ':') {
+                    commandBuffer = command;    // waiting for Q
+                } else {
+                    moveAvatar(command);
+                    commandBuffer = '\0';   // clear buffer
                 }
-            } else {
-                moveAvatar(command);
             }
-            ter.renderFrame(world.getTiles());
         }
     }
 
@@ -210,17 +214,30 @@ public class Engine {
 //        System.exit(0);
     }
 
+    private void displayHoverInfo() {
+        int mouseX = (int) StdDraw.mouseX();
+        int mouseY = (int) StdDraw.mouseY();
+        if (0 <= mouseX && mouseX < WIDTH && 0 <= mouseY && mouseY < HEIGHT) {
+            TETile tile = world.getTile(mouseX, mouseY);
+            StdDraw.setPenColor(Color.WHITE);
+            StdDraw.textLeft(1, HEIGHT - 1, tile.description());
+            StdDraw.show();
+        }
+    }
+
     private long getSeedFromKeyboard() {
-        String s = new String();
+        String s = "";
         char ch;
         drawFrame("Please type the seed, end with s");
         while (true) {
-            ch = getInputFromKeyboard();
-            if (ch == 'S') {
-                return Long.parseLong(s);
+            if (StdDraw.hasNextKeyTyped()) {
+                ch = Character.toUpperCase(StdDraw.nextKeyTyped());
+                if (ch == 'S') {
+                    return Long.parseLong(s);
+                }
+                s += ch;
+                drawFrame("Seed: " + s);
             }
-            s += ch;
-            drawFrame("Seed: " + s);
         }
     }
 
